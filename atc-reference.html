@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مرجع کدهای ATC · داروخانه آفلاین</title>
+<meta name="description" content="مرجع فارسی طبقه‌بندی ATC (کد بین‌المللی گروه‌بندی دارویی WHO) بر اساس داروهای موجود در دیتابیس رسمی ایران.">
+<link rel="stylesheet" href="style.css">
+<style>
+  .atc-wrap{ max-width: 900px; margin: 0 auto; padding: 1.4rem 1.25rem 3rem; }
+  .atc-intro{ font-size: .85rem; color: var(--text-muted); margin-bottom: 1.2rem; line-height: 1.9; }
+  .atc-group{ margin-bottom: .6rem; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); overflow: hidden; }
+  .atc-group-header{
+    display: flex; align-items: center; justify-content: space-between; gap: .8rem;
+    padding: .9rem 1.1rem; cursor: pointer; user-select: none;
+  }
+  .atc-group-header:hover{ background: var(--surface-hover); }
+  .atc-group-title{ display:flex; align-items:center; gap:.6rem; font-weight: 700; }
+  .atc-letter{
+    flex: none; width: 30px; height: 30px; border-radius: 8px;
+    background: var(--accent); color: var(--accent-contrast);
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.85rem;
+  }
+  .atc-count{ font-size: .74rem; color: var(--text-muted); background: var(--surface-alt); padding: .25rem .6rem; border-radius: 100px; }
+  .atc-chevron{ transition: transform .15s ease; color: var(--text-muted); }
+  .atc-group.open .atc-chevron{ transform: rotate(180deg); }
+  .atc-subs{ display: none; border-top: 1px solid var(--border); }
+  .atc-group.open .atc-subs{ display: block; }
+  .atc-sub-row{
+    display: flex; align-items: center; justify-content: space-between; gap: .8rem;
+    padding: .55rem 1.1rem .55rem 2.6rem; font-size: .85rem;
+    border-top: 1px solid var(--border);
+  }
+  .atc-sub-row:first-child{ border-top: none; }
+  .atc-sub-code{ direction: ltr; unicode-bidi: isolate; color: var(--text-muted); font-size: .74rem; flex: none; }
+  .back-link{ display:inline-flex; align-items:center; gap:.4rem; font-size:.85rem; color: var(--accent); text-decoration:none; margin-bottom:1rem; font-weight:600; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" width="30" height="30">
+          <path d="M15 6 L33 24 L24 33 Q17 40 10 33 Q3 26 10 19 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+          <line x1="21" y1="12" x2="12" y2="21" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="30" cy="18" r="2.6" fill="currentColor"/>
+        </svg>
+      </span>
+      <div class="brand-text">
+        <h1>مرجع <span>ATC</span></h1>
+        <p class="tagline">طبقه‌بندی جهانی گروه‌های دارویی</p>
+      </div>
+    </div>
+    <button id="theme-toggle" class="icon-btn" type="button" aria-pressed="false" title="تغییر تم">
+      <svg class="icon-sun" viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><g stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="1.5" x2="12" y2="4.2"/><line x1="12" y1="19.8" x2="12" y2="22.5"/><line x1="1.5" y1="12" x2="4.2" y2="12"/><line x1="19.8" y1="12" x2="22.5" y2="12"/><line x1="4.4" y1="4.4" x2="6.3" y2="6.3"/><line x1="17.7" y1="17.7" x2="19.6" y2="19.6"/><line x1="4.4" y1="19.6" x2="6.3" y2="17.7"/><line x1="17.7" y1="6.3" x2="19.6" y2="4.4"/></g></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" width="20" height="20"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z" fill="currentColor"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="atc-wrap">
+  <a class="back-link" href="index.html">→ بازگشت به فهرست داروها</a>
+  <p class="atc-intro">
+    ATC (Anatomical Therapeutic Chemical) سیستم طبقه‌بندی جهانی داروهاست که سازمان جهانی بهداشت (WHO) آن
+    را نگه‌داری می‌کند. هر دارو بر اساس اندام هدف، اثر درمانی و ماده مؤثره یک کد چندسطحی می‌گیرد (مثلاً
+    <span style="direction:ltr;unicode-bidi:isolate;display:inline-block">C09AA02</span> یعنی «قلبی‌عروقی
+    ← مهارکننده ACE ← اِنالاپریل»). این صفحه فقط گروه‌هایی را نشان می‌دهد که واقعاً در دیتابیس ۳٬۱۵۸ داروی
+    رسمی ایران استفاده شده‌اند؛ روی هر گروه کلیک کنید تا زیرگروه‌ها و تعداد داروهای هرکدام باز شود.
+  </p>
+  <div id="atc-tree"></div>
+</main>
+
+<footer class="app-footer">
+  <p>طبقه‌بندی سطح ۱ و ۳ ATC — ترجمه فارسی بر اساس نام‌گذاری استاندارد WHO، تطبیق‌داده‌شده با کدهای ATC
+     موجود در فهرست رسمی دارویی ایران (IRC).</p>
+</footer>
+
+<script>
+(function(){
+  function initTheme(){
+    let saved=null; try{saved=localStorage.getItem("pharmacy-theme");}catch(e){}
+    const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const theme = saved || (prefersDark ? "dark":"light");
+    applyTheme(theme);
+  }
+  function applyTheme(theme){
+    if(theme==="dark"){ document.documentElement.setAttribute("data-theme","dark"); }
+    else { document.documentElement.removeAttribute("data-theme"); }
+    try{localStorage.setItem("pharmacy-theme",theme);}catch(e){}
+  }
+  document.getElementById("theme-toggle").addEventListener("click", function(){
+    const isDark = document.documentElement.getAttribute("data-theme")==="dark";
+    applyTheme(isDark?"light":"dark");
+  });
+  initTheme();
+
+  function toPersianDigits(n){
+    const map=["۰","۱","۲","۳","۴","۵","۶","۷","۸","۹"];
+    return String(n).replace(/[0-9]/g, d=>map[+d]);
+  }
+  function escapeHtml(s){ return (s||"").toString().replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  fetch("data/atc-tree.json").then(r=>r.json()).then(tree=>{
+    const letters = Object.keys(tree).sort();
+    const host = document.getElementById("atc-tree");
+    letters.forEach(letter=>{
+      const g = tree[letter];
+      const subs = Object.entries(g.subs || {}).sort((a,b)=> b[1].count - a[1].count);
+      const el = document.createElement("div");
+      el.className = "atc-group";
+      el.innerHTML = `
+        <div class="atc-group-header">
+          <div class="atc-group-title">
+            <span class="atc-letter">${escapeHtml(letter)}</span>
+            <span>${escapeHtml(g.name_fa)}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:.6rem">
+            <span class="atc-count">${toPersianDigits(g.count)} دارو</span>
+            <span class="atc-chevron">▾</span>
+          </div>
+        </div>
+        <div class="atc-subs">
+          ${subs.map(([code,sub])=>`
+            <div class="atc-sub-row">
+              <span>${sub.name_fa ? escapeHtml(sub.name_fa) : '<span style="color:var(--text-muted)">(بدون ترجمه)</span>'}</span>
+              <span style="display:flex;align-items:center;gap:.5rem">
+                <span class="atc-count">${toPersianDigits(sub.count)}</span>
+                <span class="atc-sub-code">${escapeHtml(code)}</span>
+              </span>
+            </div>`).join("")}
+        </div>
+      `;
+      el.querySelector(".atc-group-header").addEventListener("click", ()=> el.classList.toggle("open"));
+      host.appendChild(el);
+    });
+  }).catch(err=>{
+    document.getElementById("atc-tree").innerHTML = "<p style='color:var(--text-muted)'>خطا در بارگذاری داده‌ها.</p>";
+  });
+})();
+</script>
+</body>
+</html>
