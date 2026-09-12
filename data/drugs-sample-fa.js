@@ -1,24 +1,3 @@
-/*
-  دیتابیس نمونه‌ی داروخانه آفلاین
-  ------------------------------------------------------------
-  این فایل یک «دیتابیس شروع» (starter dataset) شامل ~۱۱۰ داروی ژنریک
-  شناخته‌شده و پرمصرف است که با اطلاعات عمومی و غیرشخصی‌سازی‌شده
-  (دسته‌بندی، شکل دارویی، موارد مصرف کلی، عوارض شایع، هشدارهای کلی)
-  تهیه شده تا ساختار و رابط کاربری را نمایش دهد.
-
-  ⚠️ این اطلاعات جایگزین نسخه پزشک یا مشاوره داروساز نیست و دوز دقیق
-  مصرف را عمداً شامل نمی‌شود؛ برای تکمیل و دقیق‌سازی دیتابیس به فایل
-  README.md بخش «منابع» مراجعه کنید و داده‌های رسمی (IRC سازمان غذا و
-  دارو، دارونامه ایران، openFDA، RxNorm و ...) را جایگزین/تکمیل کنید.
-
-  ساختار هر رکورد:
-  {
-    id, name_fa, name_en, generic_fa, generic_en,
-    category_fa, category_en, form_fa, rx (true = نیازمند نسخه),
-    uses_fa, side_effects_fa, warnings_fa
-  }
-*/
-
 const DRUG_DATABASE_SAMPLE_FA = [
 {id:1,name_fa:"استامینوفن",name_en:"Acetaminophen",generic_fa:"پاراستامول",generic_en:"Paracetamol",category_fa:"مسکن و تب‌بر",category_en:"Analgesic/Antipyretic",form_fa:"قرص، شربت، شیاف",rx:false,uses_fa:"کاهش درد خفیف تا متوسط و تب",side_effects_fa:"در دوز بالا: آسیب کبدی",warnings_fa:"از مصرف هم‌زمان چند دارو حاوی استامینوفن خودداری کنید"},
 {id:2,name_fa:"آسپرین",name_en:"Aspirin",generic_fa:"استیل سالیسیلیک اسید",generic_en:"Acetylsalicylic acid",category_fa:"مسکن، ضدانعقاد",category_en:"NSAID/Antiplatelet",form_fa:"قرص",rx:false,uses_fa:"کاهش درد، تب، التهاب؛ دوز پایین برای پیشگیری از لخته",side_effects_fa:"ناراحتی معده، خونریزی گوارشی",warnings_fa:"در کودکان زیر ۱۶ سال به دلیل خطر سندرم ری ممنوع"},
