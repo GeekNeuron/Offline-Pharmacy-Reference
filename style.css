@@ -1,8 +1,3 @@
-/* ==========================================================================
-   داروخانه آفلاین — Stylesheet
-   فونت وزیرمتن به‌صورت کامل آفلاین (Variable Font) بارگذاری می‌شود.
-   ========================================================================== */
-
 @font-face {
   font-family: "Vazirmatn";
   src: url("assets/fonts/Vazirmatn-Variable.woff2") format("woff2-variations"),
@@ -13,7 +8,7 @@
 }
 
 :root{
-  /* ---- Light theme (پوسته روشن) — الهام از کاغذ نسخه و شیشه داروخانه ---- */
+  
   --bg: #F5F2E9;
   --bg-image:
     radial-gradient(circle at 100% 0%, rgba(15,110,92,0.06), transparent 45%),
@@ -41,7 +36,7 @@
 }
 
 html[data-theme="dark"]{
-  /* ---- Dark theme (پوسته تاریک) — شیشه‌های آمبر در قفسه شب‌هنگام ---- */
+  
   --bg: #0D1613;
   --bg-image:
     radial-gradient(circle at 100% 0%, rgba(63,191,160,0.08), transparent 45%),
@@ -98,7 +93,6 @@ body{
 }
 .skip-link:focus{ right: 0; }
 
-/* ---------------------------- Header ---------------------------- */
 .app-header{
   position: sticky; top: 0; z-index: 40;
   background: var(--surface);
@@ -106,7 +100,7 @@ body{
   backdrop-filter: saturate(1.4) blur(6px);
 }
 .header-inner{
-  max-width: 960px; margin: 0 auto;
+  max-width: 1200px; margin: 0 auto;
   padding: .85rem 1.25rem;
   display: flex; align-items: center; justify-content: space-between;
   gap: 1rem;
@@ -150,8 +144,7 @@ body{
 html[data-theme="dark"] .icon-sun{ display: none; }
 html[data-theme="dark"] .icon-moon{ display: block; }
 
-/* ---------------------------- Main / Search ---------------------------- */
-.app-main{ max-width: 960px; margin: 0 auto; padding: 1.4rem 1.25rem 2rem; }
+.app-main{ max-width: 1200px; margin: 0 auto; padding: 1.4rem 1.25rem 2rem; }
 
 .search-zone{ margin-bottom: .9rem; }
 .search-box-wrap{
@@ -179,12 +172,14 @@ html[data-theme="dark"] .icon-moon{ display: block; }
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent), var(--shadow);
 }
 .clear-btn{
+  display: none;
   position: absolute; left: 12px;
   width: 30px; height: 30px; border-radius: 50%;
   border: none; background: var(--surface-alt); color: var(--text-muted);
   cursor: pointer; font-size: .8rem;
-  display: flex; align-items: center; justify-content: center;
+  align-items: center; justify-content: center;
 }
+.clear-btn:not([hidden]){ display: flex; }
 .clear-btn:hover{ background: var(--surface-hover); color: var(--text); }
 
 .filter-row{
@@ -203,7 +198,6 @@ html[data-theme="dark"] .icon-moon{ display: block; }
   background: var(--accent); border-color: var(--accent); color: var(--accent-contrast);
 }
 
-/* ---------------------------- Alphabet rail ---------------------------- */
 .alpha-rail{
   position: sticky; top: 68px; z-index: 30;
   display: flex; gap: .3rem; overflow-x: auto;
@@ -226,7 +220,6 @@ html[data-theme="dark"] .icon-moon{ display: block; }
 .alpha-btn.disabled{ opacity: .35; cursor: default; pointer-events: none; }
 .alpha-btn.active{ background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
 
-/* ---------------------------- Results ---------------------------- */
 .results-meta{
   font-size: .78rem; color: var(--text-muted); margin: .3rem .2rem .8rem; font-weight: 600;
 }
@@ -243,6 +236,21 @@ html[data-theme="dark"] .icon-moon{ display: block; }
 }
 
 .drug-list{ display: flex; flex-direction: column; gap: .6rem; }
+
+@media (min-width: 820px){
+  [data-host="true"],
+  #drug-list.flat-list{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .6rem .9rem;
+  }
+}
+@media (min-width: 1280px){
+  [data-host="true"],
+  #drug-list.flat-list{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
 .drug-card{
   background: var(--surface);
   border: 1px solid var(--border);
@@ -290,12 +298,15 @@ html[data-theme="dark"] .icon-moon{ display: block; }
 .empty-state p{ margin: .3rem 0; }
 .empty-sub{ font-size: .82rem; }
 
-/* ---------------------------- Modal ---------------------------- */
 .drug-modal-backdrop{
+  display: none;
   position: fixed; inset: 0; z-index: 100;
   background: rgba(10, 15, 13, 0.55);
-  display: flex; align-items: flex-end; justify-content: center;
+  align-items: flex-end; justify-content: center;
   backdrop-filter: blur(2px);
+}
+.drug-modal-backdrop:not([hidden]){
+  display: flex;
   animation: fadeIn .15s ease;
 }
 @media (min-width: 640px){
@@ -347,23 +358,20 @@ html[data-theme="dark"] .icon-moon{ display: block; }
   font-size: .74rem; color: var(--text-muted);
 }
 
-/* ---------------------------- Footer ---------------------------- */
 .app-footer{
-  max-width: 960px; margin: 1rem auto 0; padding: 1.4rem 1.25rem 2.5rem;
+  max-width: 1200px; margin: 1rem auto 0; padding: 1.4rem 1.25rem 2.5rem;
   color: var(--text-muted); font-size: .78rem; text-align: center;
   border-top: 1px solid var(--border);
 }
 .app-footer p{ margin: .3rem 0; }
 .footer-links{ opacity: .8; }
 
-/* ---------------------------- Responsive ---------------------------- */
 @media (max-width: 480px){
   .tagline{ display: none; }
   .brand-text h1{ font-size: 1rem; }
   .letter-heading{ top: 100px; }
 }
 
-/* Respect reduced motion */
 @media (prefers-reduced-motion: reduce){
   *{ animation: none !important; transition: none !important; }
 }

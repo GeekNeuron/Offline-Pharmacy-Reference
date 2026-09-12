@@ -1,10 +1,8 @@
 (function () {
   "use strict";
 
-  /* ------------------------------------------------------------------ */
-  /* داده‌ها — دیتابیس رسمی فهرست دارویی ایران (IRC)                      */
-  /* ------------------------------------------------------------------ */
   const DB = (typeof DRUG_DATABASE_IRC !== "undefined") ? DRUG_DATABASE_IRC : [];
+  const INTERACTIONS_DB = (typeof DRUG_INTERACTIONS !== "undefined") ? DRUG_INTERACTIONS : {};
 
   const ENGLISH_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
@@ -14,9 +12,6 @@
     rx: "نسخه‌دار",
   };
 
-  /* ------------------------------------------------------------------ */
-  /* عناصر DOM                                                           */
-  /* ------------------------------------------------------------------ */
   const el = {
     themeToggle: document.getElementById("theme-toggle"),
     searchBox: document.getElementById("search-box"),
@@ -38,9 +33,6 @@
     accessFilter: "all", // all | otc | hospital | rx
   };
 
-  /* ------------------------------------------------------------------ */
-  /* تم روشن/تاریک                                                       */
-  /* ------------------------------------------------------------------ */
   function initTheme() {
     let saved = null;
     try { saved = localStorage.getItem("pharmacy-theme"); } catch (e) {}
@@ -65,9 +57,6 @@
     applyTheme(isDark ? "light" : "dark");
   });
 
-  /* ------------------------------------------------------------------ */
-  /* کمکی‌ها                                                             */
-  /* ------------------------------------------------------------------ */
   function normalize(str) {
     return (str || "")
       .toString()
@@ -103,15 +92,54 @@
     return /[A-Z]/.test(ch) ? ch : "#";
   }
 
+  const SEVERITY_FA = { M: "شدید", O: "متوسط", N: "خفیف", U: "نامشخص" };
+  const SEVERITY_ORDER = { M: 0, O: 1, N: 2, U: 3 };
+
+  const INTERACTION_STOPLIST = new Set([
+    "ACID","SODIUM","POTASSIUM","HYDROCHLORIDE","SULFATE","OXIDE","CHLORIDE",
+    "PHOSPHATE","CALCIUM","MAGNESIUM","WATER","INJECTION","SOLUTION","TABLET","CAPSULE",
+    "ACETATE","MALEATE","CITRATE","BROMIDE","NITRATE","CARBONATE","DIHYDRATE","ANHYDROUS",
+    "MONOHYDRATE","TRIHYDRATE","HUMAN","COMPOUND","EXTRA","FORTE","MESYLATE","BESYLATE",
+    "BESILATE","SUCCINATE","TARTRATE","FUMARATE","VALERATE","PROPIONATE","DIPROPIONATE",
+    "HYDROBROMIDE","PALMITATE","STEARATE","BENZOATE","GLUCONATE","LACTATE","OIL","EXTRACT",
+    "POWDER","CREAM","GEL","LOTION","SPRAY","OINTMENT","SYRUP","DROPS","IRON","ZINC","AND",
+    "MESILATE","DECANOATE","ENANTHATE","HYDRATE","BASE","FREE","XR","ER","HCL","HBR","DL",
+    "MG","MCG","UG","ML","G","IU","MEQ","MMOL","KG","L","DOSE","PUFF","UNIT","UNITS","W",
+  ]);
+
+  function interactionCoreName(s) {
+    if (!s) return "";
+    let n = s.toUpperCase().replace(/\(.*?\)/g, " ").replace(/[^A-Z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+    let words = n.split(" ").filter((w) => w && !/^\d/.test(w) && !INTERACTION_STOPLIST.has(w));
+    words = words.filter((w) => !/^\d+[A-Z]{0,3}$/.test(w));
+    return words.join(" ");
+  }
+
+  function findDrugInteractions(d) {
+    const mol = d.molecule_en || "";
+    const parts = mol.split("/").filter((p) => p.trim());
+    const keys = parts.length ? parts.map(interactionCoreName) : [interactionCoreName(mol)];
+    const merged = new Map();
+    let total = 0;
+    keys.forEach((key) => {
+      const entry = INTERACTIONS_DB[key];
+      if (!entry) return;
+      total += entry.total;
+      entry.items.forEach((it) => {
+        if (!merged.has(it.p)) merged.set(it.p, it.l);
+      });
+    });
+    const items = Array.from(merged, ([p, l]) => ({ p, l }));
+    items.sort((a, b) => (SEVERITY_ORDER[a.l] ?? 9) - (SEVERITY_ORDER[b.l] ?? 9));
+    return { total, items };
+  }
+
   function getFiltered() {
     return DB
       .filter((d) => matchesAccessFilter(d) && matchesQuery(d, state.query))
       .sort((a, b) => a.name_en.localeCompare(b.name_en, "en"));
   }
 
-  /* ------------------------------------------------------------------ */
-  /* فیلترهای سطح دسترسی                                                 */
-  /* ------------------------------------------------------------------ */
   function renderFilterChips() {
     const chips = [
       { key: "all", label: "همه" },
@@ -135,9 +163,6 @@
     });
   }
 
-  /* ------------------------------------------------------------------ */
-  /* نوار الفبا (انگلیسی — چون نام رسمی داروها در فهرست IRC انگلیسی است) */
-  /* ------------------------------------------------------------------ */
   function renderAlphaRail(availableLetters) {
     el.alphaRail.innerHTML = "";
     const allLetters = ENGLISH_ALPHABET.concat(["#"]);
@@ -157,71 +182,132 @@
   }
 
   function jumpToLetter(letter) {
+    let guard = 0;
+    while (!document.getElementById("letter-" + letter) && renderCursor < renderPlan.length && guard < 100) {
+      renderNextBatch();
+      guard++;
+    }
     const target = document.getElementById("letter-" + letter);
     if (target) {
       target.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }
 
-  /* ------------------------------------------------------------------ */
-  /* رندر فهرست                                                          */
-  /* ------------------------------------------------------------------ */
+  const BATCH_SIZE = 150;
+  let renderPlan = [];
+  let renderCursor = 0;
+  let sentinelEl = null;
+  let io = null;
+
+  function ensureObserver() {
+    if (io) return io;
+    io = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) renderNextBatch();
+      });
+    }, { root: null, rootMargin: "600px 0px", threshold: 0 });
+    return io;
+  }
+
+  function buildPlan(filtered, isSearching) {
+    const plan = [];
+    if (isSearching) {
+      filtered.forEach((d) => plan.push({ type: "card", d }));
+    } else {
+      let currentLetter = null;
+      filtered.forEach((d) => {
+        const groupLetter = firstLetter(d.name_en);
+        if (groupLetter !== currentLetter) {
+          currentLetter = groupLetter;
+          plan.push({ type: "heading", letter: groupLetter });
+        }
+        plan.push({ type: "card", d });
+      });
+    }
+    return plan;
+  }
+
+  function renderNextBatch() {
+    if (sentinelEl) { io.unobserve(sentinelEl); sentinelEl.remove(); sentinelEl = null; }
+    const end = Math.min(renderCursor + BATCH_SIZE, renderPlan.length);
+    let currentHost = null;
+    const lastGroup = el.drugList.lastElementChild;
+    if (lastGroup && lastGroup.classList && lastGroup.classList.contains("letter-group")) {
+      currentHost = lastGroup.querySelector('[data-host="true"]');
+    }
+    const frag = document.createDocumentFragment();
+    for (let i = renderCursor; i < end; i++) {
+      const item = renderPlan[i];
+      if (item.type === "heading") {
+        const heading = document.createElement("div");
+        heading.className = "letter-heading";
+        heading.id = "letter-" + item.letter;
+        heading.textContent = item.letter;
+        const groupWrap = document.createElement("div");
+        groupWrap.className = "letter-group";
+        groupWrap.appendChild(heading);
+        const cardsHost = document.createElement("div");
+        cardsHost.className = "drug-list";
+        cardsHost.dataset.host = "true";
+        groupWrap.appendChild(cardsHost);
+        frag.appendChild(groupWrap);
+        currentHost = cardsHost;
+      } else {
+        const card = renderCard(item.d);
+        if (currentHost) currentHost.appendChild(card);
+        else frag.appendChild(card);
+      }
+    }
+    el.drugList.appendChild(frag);
+    renderCursor = end;
+    if (renderCursor < renderPlan.length) {
+      sentinelEl = document.createElement("div");
+      sentinelEl.className = "render-sentinel";
+      sentinelEl.setAttribute("aria-hidden", "true");
+      el.drugList.appendChild(sentinelEl);
+      ensureObserver().observe(sentinelEl);
+    }
+  }
+
   function renderList() {
     const filtered = getFiltered();
     el.drugList.innerHTML = "";
+    if (sentinelEl) { sentinelEl = null; }
+    if (io) io.disconnect();
     el.resultsMeta.textContent = filtered.length
       ? `${toPersianDigits(filtered.length)} دارو یافت شد`
       : "";
 
     if (!filtered.length) {
       el.emptyState.hidden = false;
-      el.alphaRail.querySelectorAll(".alpha-btn").forEach((b) => b.classList.remove("active"));
+      renderAlphaRail(new Set());
+      renderPlan = [];
+      renderCursor = 0;
       return;
     }
     el.emptyState.hidden = true;
 
     const isSearching = !!state.query.trim();
-    const availableLetters = new Set();
-
-    if (isSearching) {
-      filtered.forEach((d) => el.drugList.appendChild(renderCard(d)));
-    } else {
-      let currentLetter = null;
-      let groupWrap = null;
-      filtered.forEach((d) => {
-        const groupLetter = firstLetter(d.name_en);
-        availableLetters.add(groupLetter);
-        if (groupLetter !== currentLetter) {
-          currentLetter = groupLetter;
-          const heading = document.createElement("div");
-          heading.className = "letter-heading";
-          heading.id = "letter-" + groupLetter;
-          heading.textContent = groupLetter;
-          groupWrap = document.createElement("div");
-          groupWrap.className = "letter-group";
-          groupWrap.appendChild(heading);
-          const cardsHost = document.createElement("div");
-          cardsHost.className = "drug-list";
-          cardsHost.dataset.host = "true";
-          groupWrap.appendChild(cardsHost);
-          el.drugList.appendChild(groupWrap);
-        }
-        const host = groupWrap.querySelector('[data-host="true"]');
-        host.appendChild(renderCard(d));
-      });
-    }
-
+    el.drugList.classList.toggle("flat-list", isSearching);
+    const availableLetters = isSearching ? new Set() : new Set(filtered.map((d) => firstLetter(d.name_en)));
     renderAlphaRail(availableLetters);
+
+    renderPlan = buildPlan(filtered, isSearching);
+    renderCursor = 0;
+    renderNextBatch();
   }
 
   function renderCard(d) {
     const card = document.createElement("button");
     card.type = "button";
     card.className = "drug-card";
-    const sub = [d.form_fa, d.route_fa].filter(Boolean).join(" · ");
+    const subParts = [d.form_fa, d.route_fa];
+    if (d.atc_fa && d.atc_fa.group_fa) subParts.push(d.atc_fa.group_fa);
+    const sub = subParts.filter(Boolean).join(" · ");
     const hasFa = d.fa && d.fa.name;
     const hasIntl = !hasFa && d.intl;
     const hasClassOnly = !hasFa && !hasIntl && d.pharm_class;
+    const hasInteraction = findDrugInteractions(d).items.some((it) => it.l === "M");
     const titleHtml = hasFa
       ? `${escapeHtml(d.fa.name)} <span class="en">${escapeHtml(d.name_en)}</span>`
       : `<span class="en">${escapeHtml(d.name_en)}</span>`;
@@ -232,7 +318,7 @@
     card.innerHTML = `
       <div class="drug-card-main">
         <p class="drug-card-name">${titleHtml} ${d.strength ? `<span class="en" style="opacity:.7">${escapeHtml(d.strength)}</span>` : ""}</p>
-        <p class="drug-card-sub">${escapeHtml(sub)}${tag}</p>
+        <p class="drug-card-sub">${escapeHtml(sub)}${tag}${hasInteraction ? ' <span class="fa-tag" style="color:var(--rx-color)">⚠️ تداخل مهم</span>' : ""}</p>
       </div>
       <span class="badge ${d.access}">${ACCESS_LABEL[d.access] || "—"}</span>
     `;
@@ -250,9 +336,6 @@
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
-  /* ------------------------------------------------------------------ */
-  /* مودال جزئیات دارو                                                   */
-  /* ------------------------------------------------------------------ */
   function row(label, value, isLtr) {
     if (!value) return "";
     return `
@@ -312,6 +395,30 @@
 
     const noDataNote = (!fa && !intl && !pc && !ic);
 
+    const interactionData = findDrugInteractions(d);
+    const interactionItems = interactionData.items;
+    const majorCount = interactionItems.filter((it) => it.l === "M").length;
+    const visibleCount = 10;
+    function interactionRow(it) {
+      const badgeColor = it.l === "M" ? "var(--rx-color)" : (it.l === "O" ? "var(--accent-2)" : "var(--text-muted)");
+      const badgeBg = it.l === "M" ? "var(--rx-bg)" : (it.l === "O" ? "var(--accent-2-soft)" : "var(--surface-alt)");
+      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.4rem 0;border-top:1px solid var(--border)">
+        <span style="direction:ltr;unicode-bidi:isolate;text-align:right">${escapeHtml(it.p)}</span>
+        <span style="flex:none;font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:100px;background:${badgeBg};color:${badgeColor}">${SEVERITY_FA[it.l] || it.l}</span>
+      </div>`;
+    }
+    const interactionsBlock = interactionItems.length ? `
+      <div class="modal-section warning">
+        <h3>⚠️ تداخل دارویی (${toPersianDigits(interactionData.total)} مورد ثبت‌شده، ${toPersianDigits(majorCount)} مورد شدید)</h3>
+        <div>${interactionItems.slice(0, visibleCount).map(interactionRow).join("")}</div>
+        ${interactionItems.length > visibleCount ? `
+          <details style="margin-top:.3rem">
+            <summary style="cursor:pointer;font-size:.78rem;color:var(--rx-color)">نمایش ${toPersianDigits(interactionItems.length - visibleCount)} مورد دیگر</summary>
+            <div>${interactionItems.slice(visibleCount).map(interactionRow).join("")}</div>
+          </details>` : ""}
+        <p style="font-size:.72rem;color:var(--text-muted);margin-top:.5rem">منبع: DDInter (دیتابیس باز و دارای داوری علمی). پیش از مصرف هم‌زمان چند دارو حتماً با پزشک یا داروساز مشورت کنید.</p>
+      </div>` : "";
+
     el.modalContent.innerHTML = `
       <div class="modal-title-row">
         <h2 id="modal-title" style="direction:ltr;unicode-bidi:isolate;text-align:right">${escapeHtml(d.name_en)}</h2>
@@ -327,6 +434,7 @@
       ${intlBlock}
       ${comboBlock}
       ${pharmClassBlock}
+      ${interactionsBlock}
 
       ${row("ترکیب دارویی (مولکول)", d.molecule_en, true)}
       ${row("نحوه مصرف", d.route_fa)}
@@ -361,9 +469,6 @@
     if (e.key === "Escape" && !el.modalBackdrop.hidden) closeModal();
   });
 
-  /* ------------------------------------------------------------------ */
-  /* جستجوی آنی                                                          */
-  /* ------------------------------------------------------------------ */
   let debounceTimer = null;
   el.searchBox.addEventListener("input", (e) => {
     const val = e.target.value;
@@ -383,9 +488,6 @@
     renderList();
   });
 
-  /* ------------------------------------------------------------------ */
-  /* راه‌اندازی اولیه                                                    */
-  /* ------------------------------------------------------------------ */
   function init() {
     initTheme();
     el.drugCount.textContent = `${toPersianDigits(DB.length)} دارو در دیتابیس رسمی`;
