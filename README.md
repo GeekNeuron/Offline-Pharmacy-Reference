@@ -36,7 +36,7 @@ https://irc.fda.gov.ir/Home/HomePage
 
 | لایه | منبع | مجوز |
 |---|---|---|
-| شرح فارسی/بالینی (`fa`) | دیتابیس دستی داخلی، تدوین‌شده برای ۱۱۰ داروی پرکاربرد | — |
+| شرح فارسی/بالینی (`fa`) | دیتابیس دستی داخلی، تدوین‌شده برای ۱۹۳ داروی پرکاربرد | — |
 | خلاصه انگلیسی موارد مصرف (`intl`) | [eg-drugs](https://github.com/mahmoudfalous/eg-drugs) | نامشخص در ریپو |
 | کلاس دارویی (`pharm_class`) | [FDA NDC Directory](https://open.fda.gov/apis/drug/ndc/) | Public Domain |
 | گروه‌بندی درمانی ATC (`atc_fa`) | استاندارد [WHO ATC/DDD](https://www.whocc.no/atc_ddd_index/)، با کمک ساختار [Codigos-ATC-ANMAT](https://github.com/psbella/Codigos-ATC-ANMAT) | استاندارد باز |

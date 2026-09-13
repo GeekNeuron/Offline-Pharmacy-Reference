@@ -29,6 +29,13 @@
 
     <div class="header-actions">
       <span class="drug-count" id="drug-count" aria-live="polite"></span>
+      <button id="about-btn" class="icon-btn" type="button" aria-label="درباره">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+          <circle cx="12" cy="12" r="9.25" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <line x1="12" y1="16.2" x2="12" y2="11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <circle cx="12" cy="7.8" r="1.15" fill="currentColor"/>
+        </svg>
+      </button>
       <button id="theme-toggle" class="icon-btn" type="button" aria-pressed="false" title="تغییر تم روشن/تاریک">
         <svg class="icon-sun" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
           <circle cx="12" cy="12" r="4.5" fill="currentColor"/>
@@ -85,6 +92,26 @@
     <div id="modal-content"></div>
   </div>
 </div>
+
+<dialog id="about-dialog">
+  <div class="about-dialog-header">
+    <h2>درباره داروخانه آفلاین</h2>
+    <button id="about-close-btn" class="icon-btn" type="button" aria-label="بستن">✕</button>
+  </div>
+  <div class="about-dialog-body">
+    <p id="about-drug-count" class="about-count"></p>
+    <h3>منابع مورد استفاده</h3>
+    <ul class="about-sources-list">
+      <li><strong>فهرست رسمی دارویی ایران (IRC)</strong> — سازمان غذا و دارو، برای ساختار پایه هر دارو (نام، ترکیب، شکل، سطح دسترسی، کد ATC)</li>
+      <li><strong>DDInter 2.0</strong> — دیتابیس باز و دارای داوری علمی، برای تداخل دارویی</li>
+      <li><strong>eg-drugs</strong> — برای خلاصه انگلیسی موارد مصرف در مواردی که شرح فارسی کامل نبود</li>
+      <li><strong>FDA NDC Directory</strong> — برای کلاس دارویی رسمی هر ماده مؤثره</li>
+      <li><strong>استاندارد جهانی WHO ATC/DDD</strong> — برای دسته‌بندی درمانی فارسی</li>
+      <li>شرح فارسی دستی و دانش دارویی عمومی، برای داروهای پرکاربرد و پرمصرف</li>
+    </ul>
+    <p class="about-disclaimer">اطلاعات این برنامه جنبه عمومی و آموزشی دارد و جایگزین نسخه پزشک یا مشاوره داروساز نیست.</p>
+  </div>
+</dialog>
 
 <footer class="app-footer">
   <p>منبع دیتابیس: <strong>فهرست رسمی دارویی ایران</strong> (سامانه IRC، سازمان غذا و دارو). این فهرست شامل

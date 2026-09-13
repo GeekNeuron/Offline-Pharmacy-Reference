@@ -30,7 +30,7 @@
 
   let state = {
     query: "",
-    accessFilter: "all", // all | otc | hospital | rx
+    accessFilter: "all",
   };
 
   function initTheme() {
@@ -57,19 +57,34 @@
     applyTheme(isDark ? "light" : "dark");
   });
 
+  const aboutBtn = document.getElementById("about-btn");
+  const aboutDialog = document.getElementById("about-dialog");
+  const aboutCloseBtn = document.getElementById("about-close-btn");
+  aboutBtn.addEventListener("click", () => {
+    const countEl = document.getElementById("about-drug-count");
+    countEl.textContent = `${toPersianDigits(DB.length)} داروی رسمی · ${toPersianDigits(DB.filter((d) => d.fa || d.intl || d.pharm_class || d.intl_combo).length)} مورد دارای توضیح تکمیلی`;
+    aboutDialog.showModal();
+  });
+  aboutCloseBtn.addEventListener("click", () => aboutDialog.close());
+  aboutDialog.addEventListener("click", (e) => {
+    if (e.target === aboutDialog) aboutDialog.close();
+  });
+
   function normalize(str) {
     return (str || "")
       .toString()
       .toLowerCase()
-      .replace(/[\u064B-\u0652]/g, "")   // اعراب فارسی/عربی
+      .replace(/[\u064B-\u0652]/g, "")
+      .replace(/[\u200c\u200f\u200e]/g, "")
       .replace(/ي/g, "ی")
       .replace(/ك/g, "ک")
+      .replace(/\s+/g, "")
       .trim();
   }
 
   function matchesQuery(d, q) {
     if (!q) return true;
-    const faParts = d.fa ? [d.fa.name, d.fa.generic, d.fa.category] : [];
+    const faParts = d.fa ? [d.fa.name, d.fa.generic, d.fa.category, ...(d.fa.aliases || [])] : [];
     const intlParts = d.intl ? [d.intl.ingredient] : [];
     const classParts = d.pharm_class ? [d.pharm_class.fa, d.pharm_class.en] : [];
     const atcParts = d.atc_fa ? [d.atc_fa.group_fa, d.atc_fa.subgroup_fa] : [];
