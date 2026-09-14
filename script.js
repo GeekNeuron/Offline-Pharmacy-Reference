@@ -32,6 +32,7 @@
     query: "",
     accessFilter: "all",
   };
+  const selectedDrugs = new Map();
 
   function initTheme() {
     let saved = null;
@@ -69,6 +70,60 @@
   aboutDialog.addEventListener("click", (e) => {
     if (e.target === aboutDialog) aboutDialog.close();
   });
+
+  const selectionBar = document.getElementById("selection-bar");
+  const selectionCount = document.getElementById("selection-count");
+  const selectionClearBtn = document.getElementById("selection-clear-btn");
+  const selectionInvoiceBtn = document.getElementById("selection-invoice-btn");
+  const invoiceDialog = document.getElementById("invoice-dialog");
+  const invoiceCloseBtn = document.getElementById("invoice-close-btn");
+  const invoicePrintBtn = document.getElementById("invoice-print-btn");
+  const invoiceTableBody = document.getElementById("invoice-table-body");
+  const invoiceDateEl = document.getElementById("invoice-date");
+
+  function updateSelectionBar() {
+    const n = selectedDrugs.size;
+    if (n === 0) {
+      selectionBar.hidden = true;
+      return;
+    }
+    selectionBar.hidden = false;
+    selectionCount.textContent = `${toPersianDigits(n)} داروی انتخاب‌شده`;
+  }
+
+  selectionClearBtn.addEventListener("click", () => {
+    selectedDrugs.clear();
+    document.querySelectorAll(".drug-card-check input").forEach((cb) => { cb.checked = false; });
+    updateSelectionBar();
+  });
+
+  function buildInvoice() {
+    const items = Array.from(selectedDrugs.values());
+    invoiceTableBody.innerHTML = items.map((d, i) => {
+      const name = (d.fa && d.fa.name) ? `${d.fa.name} (${d.name_en})` : d.name_en;
+      const strength = d.strength ? ` ${d.strength}` : "";
+      return `
+        <tr>
+          <td>${toPersianDigits(i + 1)}</td>
+          <td class="invoice-drug-name">${escapeHtml(name)}${escapeHtml(strength)}</td>
+          <td class="invoice-blank-cell"></td>
+          <td class="invoice-blank-cell"></td>
+          <td class="invoice-blank-cell"></td>
+        </tr>`;
+    }).join("");
+    const today = new Date();
+    invoiceDateEl.textContent = `تاریخ: ${today.toLocaleDateString("fa-IR")}`;
+  }
+
+  selectionInvoiceBtn.addEventListener("click", () => {
+    buildInvoice();
+    invoiceDialog.showModal();
+  });
+  invoiceCloseBtn.addEventListener("click", () => invoiceDialog.close());
+  invoiceDialog.addEventListener("click", (e) => {
+    if (e.target === invoiceDialog) invoiceDialog.close();
+  });
+  invoicePrintBtn.addEventListener("click", () => window.print());
 
   function normalize(str) {
     return (str || "")
@@ -313,9 +368,25 @@
   }
 
   function renderCard(d) {
-    const card = document.createElement("button");
-    card.type = "button";
-    card.className = "drug-card";
+    const wrap = document.createElement("div");
+    wrap.className = "drug-card";
+
+    const checkboxWrap = document.createElement("label");
+    checkboxWrap.className = "drug-card-check";
+    checkboxWrap.addEventListener("click", (e) => e.stopPropagation());
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = selectedDrugs.has(d.id);
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) selectedDrugs.set(d.id, d);
+      else selectedDrugs.delete(d.id);
+      updateSelectionBar();
+    });
+    checkboxWrap.appendChild(checkbox);
+
+    const body = document.createElement("button");
+    body.type = "button";
+    body.className = "drug-card-body";
     const subParts = [d.form_fa, d.route_fa];
     if (d.atc_fa && d.atc_fa.group_fa) subParts.push(d.atc_fa.group_fa);
     const sub = subParts.filter(Boolean).join(" · ");
@@ -330,15 +401,18 @@
       ? ' <span class="fa-tag">شرح فارسی موجود</span>'
       : (hasIntl ? ' <span class="fa-tag" style="color:var(--text-muted)">خلاصه انگلیسی موجود</span>'
       : (hasClassOnly ? ` <span class="fa-tag" style="color:var(--text-muted)">${escapeHtml(d.pharm_class.fa || d.pharm_class.en)}</span>` : ""));
-    card.innerHTML = `
+    body.innerHTML = `
       <div class="drug-card-main">
         <p class="drug-card-name">${titleHtml} ${d.strength ? `<span class="en" style="opacity:.7">${escapeHtml(d.strength)}</span>` : ""}</p>
         <p class="drug-card-sub">${escapeHtml(sub)}${tag}${hasInteraction ? ' <span class="fa-tag" style="color:var(--rx-color)">⚠️ تداخل مهم</span>' : ""}</p>
       </div>
       <span class="badge ${d.access}">${ACCESS_LABEL[d.access] || "—"}</span>
     `;
-    card.addEventListener("click", () => openModal(d));
-    return card;
+    body.addEventListener("click", () => openModal(d));
+
+    wrap.appendChild(checkboxWrap);
+    wrap.appendChild(body);
+    return wrap;
   }
 
   function toPersianDigits(n) {

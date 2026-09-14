@@ -113,6 +113,61 @@
   </div>
 </dialog>
 
+<div class="selection-bar" id="selection-bar" hidden>
+  <span id="selection-count"></span>
+  <div class="selection-bar-actions">
+    <button id="selection-clear-btn" type="button" class="selection-btn selection-btn-ghost">پاک‌کردن</button>
+    <button id="selection-invoice-btn" type="button" class="selection-btn selection-btn-primary">مشاهده فاکتور</button>
+  </div>
+</div>
+
+<dialog id="invoice-dialog">
+  <div class="about-dialog-header no-print">
+    <h2>فاکتور داروخانه</h2>
+    <div style="display:flex;gap:.5rem;align-items:center">
+      <button id="invoice-print-btn" type="button" class="selection-btn selection-btn-primary">چاپ / PDF</button>
+      <button id="invoice-close-btn" class="icon-btn" type="button" aria-label="بستن">✕</button>
+    </div>
+  </div>
+  <div class="about-dialog-body">
+    <div id="invoice-print-area" class="invoice-sheet">
+      <div class="invoice-head">
+        <div class="invoice-head-right">
+          <div class="invoice-pharmacy-name">داروخانه ..........................................</div>
+          <div class="invoice-field">آدرس: ....................................................................................</div>
+          <div class="invoice-field">تلفن: .......................................</div>
+        </div>
+        <div class="invoice-head-left">
+          <div class="invoice-field">شماره فاکتور: ..................</div>
+          <div class="invoice-field" id="invoice-date"></div>
+          <div class="invoice-field">نام بیمار: ....................................</div>
+        </div>
+      </div>
+      <table class="invoice-table" id="invoice-table">
+        <thead>
+          <tr>
+            <th>ردیف</th>
+            <th>نام دارو</th>
+            <th>تعداد</th>
+            <th>قیمت واحد (ریال)</th>
+            <th>قیمت کل (ریال)</th>
+          </tr>
+        </thead>
+        <tbody id="invoice-table-body"></tbody>
+      </table>
+      <div class="invoice-total-row">
+        <span>جمع کل:</span>
+        <span class="invoice-total-blank">.............................................. ریال</span>
+      </div>
+      <div class="invoice-foot">
+        <div class="invoice-sign">مهر و امضای داروخانه</div>
+        <div class="invoice-sign">امضای مسئول فنی</div>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+
 <footer class="app-footer">
   <p>منبع دیتابیس: <strong>فهرست رسمی دارویی ایران</strong> (سامانه IRC، سازمان غذا و دارو). این فهرست شامل
      موارد مصرف بالینی، عوارض یا هشدار تفصیلی نیست؛ همیشه پیش از مصرف دارو با پزشک یا داروساز مشورت کنید.</p>

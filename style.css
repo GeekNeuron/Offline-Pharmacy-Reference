@@ -255,16 +255,29 @@ html[data-theme="dark"] .icon-moon{ display: block; }
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: .85rem 1rem;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: space-between; gap: .8rem;
-  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
-  text-align: right;
+  display: flex; align-items: stretch; gap: 0;
+  transition: border-color .12s ease;
 }
-.drug-card:hover{
+.drug-card:has(.drug-card-body:hover){
   border-color: var(--accent);
   box-shadow: var(--shadow);
-  transform: translateY(-1px);
+}
+.drug-card-check{
+  flex: none;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 .3rem 0 .7rem;
+  cursor: pointer;
+}
+.drug-card-check input{
+  width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer;
+}
+.drug-card-body{
+  flex: 1; min-width: 0;
+  background: none; border: none; font-family: inherit;
+  padding: .85rem 1rem .85rem 0;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: .8rem;
+  text-align: right; color: inherit;
 }
 .drug-card-main{ min-width: 0; }
 .drug-card-name{
@@ -386,6 +399,60 @@ html[data-theme="dark"] .icon-moon{ display: block; }
 .about-disclaimer{
   margin-top: 1rem; padding-top: .8rem; border-top: 1px dashed var(--border);
   font-size: .76rem; color: var(--text-muted);
+}
+
+.selection-bar{
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
+  background: var(--surface); border-top: 1px solid var(--border);
+  box-shadow: 0 -8px 24px rgba(0,0,0,.12);
+  padding: .8rem 1.25rem; padding-bottom: calc(.8rem + env(safe-area-inset-bottom));
+  align-items: center; justify-content: space-between; gap: 1rem;
+}
+.selection-bar:not([hidden]){ display: flex; }
+#selection-count{ font-size: .85rem; font-weight: 700; }
+.selection-bar-actions{ display: flex; gap: .6rem; }
+.selection-btn{
+  font-family: inherit; font-size: .82rem; font-weight: 700;
+  padding: .55rem 1.1rem; border-radius: 10px; cursor: pointer; border: none;
+}
+.selection-btn-ghost{ background: var(--surface-alt); color: var(--text-muted); }
+.selection-btn-primary{ background: var(--accent); color: var(--accent-contrast); }
+
+#invoice-dialog{
+  border: none; border-radius: 20px; padding: 0;
+  background: var(--surface); color: var(--text);
+  width: min(700px, 94vw); max-height: 90dvh;
+  box-shadow: var(--shadow-lg);
+}
+#invoice-dialog::backdrop{ background: rgba(10,15,13,0.55); }
+#invoice-dialog .about-dialog-body{ max-height: calc(90dvh - 64px); background: #f5f2ea; }
+.invoice-sheet{
+  background: #fff; color: #111; border-radius: 8px; padding: 1.5rem;
+  font-family: "Vazirmatn", sans-serif;
+}
+.invoice-head{ display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; padding-bottom: 1rem; border-bottom: 2px solid #111; flex-wrap: wrap; }
+.invoice-pharmacy-name{ font-size: 1.05rem; font-weight: 800; margin-bottom: .5rem; }
+.invoice-field{ font-size: .85rem; margin-bottom: .35rem; color: #333; }
+.invoice-table{ width: 100%; border-collapse: collapse; font-size: .85rem; }
+.invoice-table th, .invoice-table td{ border: 1px solid #999; padding: .5rem .6rem; text-align: center; }
+.invoice-table th{ background: #eee; font-weight: 700; }
+.invoice-drug-name{ text-align: right; }
+.invoice-blank-cell{ height: 1.8rem; }
+.invoice-total-row{
+  display: flex; justify-content: flex-end; gap: .6rem; align-items: center;
+  margin-top: 1rem; font-weight: 700; font-size: .95rem;
+}
+.invoice-total-blank{ font-weight: 500; letter-spacing: 1px; }
+.invoice-foot{ display: flex; justify-content: space-between; margin-top: 3rem; font-size: .82rem; color: #333; }
+.invoice-sign{ border-top: 1px solid #999; padding-top: .4rem; width: 40%; text-align: center; }
+
+@media print{
+  body *{ visibility: hidden; }
+  #invoice-print-area, #invoice-print-area *{ visibility: visible; }
+  #invoice-print-area{ position: fixed; inset: 0; padding: 1.5rem; }
+  #invoice-dialog{ max-height: none; box-shadow: none; }
+  #invoice-dialog .about-dialog-body{ max-height: none; overflow: visible; background: #fff; }
 }
 
 @media (max-width: 480px){
