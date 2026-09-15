@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>داروخانه آفلاین · دیتابیس جامع دارویی</title>
-<meta name="description" content="مرجع آفلاین جستجوی دارو — جستجوی آنی، فهرست الفبایی و اطلاعات کامل هر دارو، بدون نیاز به اینترنت.">
+<title>دارونامه · مرجع آفلاین جامع دارویی</title>
+<meta name="description" content="دارونامه — مرجع آفلاین جستجوی دارو، جستجوی آنی، فهرست الفبایی و اطلاعات کامل هر دارو، بدون نیاز به اینترنت.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,14 +15,16 @@
   <div class="header-inner">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 48 48" width="30" height="30">
-          <path d="M15 6 L33 24 L24 33 Q17 40 10 33 Q3 26 10 19 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
-          <line x1="21" y1="12" x2="12" y2="21" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
-          <circle cx="30" cy="18" r="2.6" fill="currentColor"/>
+        <svg viewBox="0 0 48 48" width="26" height="26">
+          <path d="M9 20 Q9 34 24 34 Q39 34 39 20" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          <ellipse cx="24" cy="20" rx="15" ry="4" fill="none" stroke="currentColor" stroke-width="3"/>
+          <line x1="17" y1="13" x2="30" y2="26" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
+          <circle cx="30" cy="26" r="3.2" fill="currentColor"/>
+          <circle cx="17" cy="13" r="2.4" fill="none" stroke="currentColor" stroke-width="2.4"/>
         </svg>
       </span>
       <div class="brand-text">
-        <h1>داروخانه <span>آفلاین</span></h1>
+        <h1>دارو<span>نامه</span></h1>
         <p class="tagline">مرجع سریع دارویی · بدون نیاز به اینترنت</p>
       </div>
     </div>
@@ -77,7 +79,6 @@
   <nav class="alpha-rail" id="alpha-rail" aria-label="فهرست الفبایی"></nav>
 
   <section class="results-zone">
-    <div id="results-meta" class="results-meta" aria-live="polite"></div>
     <div id="drug-list" class="drug-list"></div>
     <div id="empty-state" class="empty-state" hidden>
       <p>💊 دارویی با این مشخصات در دیتابیس فعلی پیدا نشد.</p>
@@ -95,7 +96,7 @@
 
 <dialog id="about-dialog">
   <div class="about-dialog-header">
-    <h2>درباره داروخانه آفلاین</h2>
+    <h2>درباره دارونامه</h2>
     <button id="about-close-btn" class="icon-btn" type="button" aria-label="بستن">✕</button>
   </div>
   <div class="about-dialog-body">
@@ -130,39 +131,52 @@
     </div>
   </div>
   <div class="about-dialog-body">
-    <div id="invoice-print-area" class="invoice-sheet">
-      <div class="invoice-head">
-        <div class="invoice-head-right">
-          <div class="invoice-pharmacy-name">داروخانه ..........................................</div>
-          <div class="invoice-field">آدرس: ....................................................................................</div>
-          <div class="invoice-field">تلفن: .......................................</div>
-        </div>
-        <div class="invoice-head-left">
-          <div class="invoice-field">شماره فاکتور: ..................</div>
-          <div class="invoice-field" id="invoice-date"></div>
-          <div class="invoice-field">نام بیمار: ....................................</div>
+    <div id="invoice-print-area" class="invoice-container">
+      <div class="invoice-header">
+        <div class="invoice-header-title">
+          <h1>داروخانه <span class="fill-line" contenteditable="true" data-placeholder="نام داروخانه"></span></h1>
+          <div class="invoice-banner">فاکتــــــور داروهــــــا</div>
         </div>
       </div>
-      <table class="invoice-table" id="invoice-table">
+
+      <div class="invoice-info-boxes">
+        <div class="invoice-box">
+          <div class="invoice-box-title">مشخصات بیمار</div>
+          <div class="invoice-box-item"><span>نام بیمار :</span> <strong class="fill-blank" contenteditable="true" data-placeholder="............."></strong></div>
+          <div class="invoice-box-item"><span>سن بیمار :</span> <strong class="fill-blank" contenteditable="true" data-placeholder="....."></strong></div>
+          <div class="invoice-box-item"><span>کد ملی :</span> <strong class="fill-blank" contenteditable="true" data-placeholder="............."></strong></div>
+          <div class="invoice-box-item"><span>شماره تماس :</span> <strong class="fill-blank" contenteditable="true" data-placeholder="............."></strong></div>
+        </div>
+        <div class="invoice-box">
+          <div class="invoice-box-title">اطلاعات نسخه</div>
+          <div class="invoice-box-item"><span>نام دکتر :</span> <strong class="fill-blank" contenteditable="true" data-placeholder="............."></strong></div>
+          <div class="invoice-box-item"><span>بیماری/تشخیص :</span> <strong class="fill-blank" contenteditable="true" data-placeholder="............."></strong></div>
+          <div class="invoice-box-item"><span>تاریخ :</span> <strong class="fill-blank" contenteditable="true" id="invoice-date" data-placeholder="....../....../....."></strong></div>
+          <div class="invoice-box-item"><span>ساعت :</span> <strong class="fill-blank" contenteditable="true" data-placeholder="....:....."></strong></div>
+        </div>
+      </div>
+
+      <table class="invoice-items-table">
         <thead>
           <tr>
-            <th>ردیف</th>
-            <th>نام دارو</th>
-            <th>تعداد</th>
-            <th>قیمت واحد (ریال)</th>
-            <th>قیمت کل (ریال)</th>
+            <th style="width:8%">ردیف</th>
+            <th style="width:42%">شرح دارو</th>
+            <th style="width:12%">تعداد</th>
+            <th style="width:18%">قیمت واحد (ریال)</th>
+            <th style="width:20%">مبلغ کل (ریال)</th>
           </tr>
         </thead>
         <tbody id="invoice-table-body"></tbody>
       </table>
-      <div class="invoice-total-row">
-        <span>جمع کل:</span>
-        <span class="invoice-total-blank">.............................................. ریال</span>
+
+      <div class="invoice-bottom-section">
+        <div class="invoice-total-box">
+          <span>مبلغ کل قابل پرداخت :</span>
+          <strong id="invoice-grand-total">۰ ریال</strong>
+        </div>
       </div>
-      <div class="invoice-foot">
-        <div class="invoice-sign">مهر و امضای داروخانه</div>
-        <div class="invoice-sign">امضای مسئول فنی</div>
-      </div>
+
+      <div class="invoice-footer-text">با تشکر از مراجعه شما. بهبودی شما آرزوی ماست.</div>
     </div>
   </div>
 </dialog>
@@ -172,6 +186,7 @@
   <p>منبع دیتابیس: <strong>فهرست رسمی دارویی ایران</strong> (سامانه IRC، سازمان غذا و دارو). این فهرست شامل
      موارد مصرف بالینی، عوارض یا هشدار تفصیلی نیست؛ همیشه پیش از مصرف دارو با پزشک یا داروساز مشورت کنید.</p>
   <p class="footer-links">فونت: Vazirmatn (OFL) · ساخته‌شده برای استفاده کاملاً آفلاین · <a href="atc-reference.html" style="color:var(--accent)">مرجع کدهای ATC ↗</a></p>
+  <p class="footer-credit">Created with ❤️ by GeekNeuron</p>
 </footer>
 
 <script src="data/drugs-irc.js"></script>

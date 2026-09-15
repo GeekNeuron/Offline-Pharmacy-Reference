@@ -18,7 +18,6 @@
     clearBtn: document.getElementById("clear-search"),
     filterRow: document.getElementById("filter-row"),
     alphaRail: document.getElementById("alpha-rail"),
-    resultsMeta: document.getElementById("results-meta"),
     drugList: document.getElementById("drug-list"),
     emptyState: document.getElementById("empty-state"),
     drugCount: document.getElementById("drug-count"),
@@ -31,6 +30,7 @@
   let state = {
     query: "",
     accessFilter: "all",
+    activeLetter: null,
   };
   const selectedDrugs = new Map();
 
@@ -79,7 +79,6 @@
   const invoiceCloseBtn = document.getElementById("invoice-close-btn");
   const invoicePrintBtn = document.getElementById("invoice-print-btn");
   const invoiceTableBody = document.getElementById("invoice-table-body");
-  const invoiceDateEl = document.getElementById("invoice-date");
 
   function updateSelectionBar() {
     const n = selectedDrugs.size;
@@ -97,22 +96,103 @@
     updateSelectionBar();
   });
 
+  function parseInvoiceNumber(str) {
+    if (!str) return 0;
+    const map = { "۰": "0", "۱": "1", "۲": "2", "۳": "3", "۴": "4", "۵": "5", "۶": "6", "۷": "7", "۸": "8", "۹": "9" };
+    const ascii = str.toString().replace(/[۰-۹]/g, (d) => map[d]).replace(/[^\d.]/g, "");
+    const n = parseFloat(ascii);
+    return isNaN(n) ? 0 : n;
+  }
+
+  function formatInvoiceNumber(n) {
+    const rounded = Math.round(n);
+    return toPersianDigits(rounded.toLocaleString("en-US"));
+  }
+
+  function recalcInvoiceRow(row) {
+    const cells = row.querySelectorAll(".fill-blank");
+    const qtyCell = cells[0];
+    const priceCell = cells[1];
+    const totalCell = row.querySelector(".invoice-row-total");
+    if (!qtyCell || !priceCell || !totalCell) return;
+    const qty = parseInvoiceNumber(qtyCell.textContent);
+    const price = parseInvoiceNumber(priceCell.textContent);
+    totalCell.textContent = formatInvoiceNumber(qty * price);
+    recalcInvoiceGrandTotal();
+  }
+
+  function recalcInvoiceGrandTotal() {
+    let sum = 0;
+    invoiceTableBody.querySelectorAll(".invoice-row-total").forEach((cell) => {
+      sum += parseInvoiceNumber(cell.textContent);
+    });
+    const grandTotalEl = document.getElementById("invoice-grand-total");
+    if (grandTotalEl) grandTotalEl.textContent = `${formatInvoiceNumber(sum)} ریال`;
+  }
+
   function buildInvoice() {
     const items = Array.from(selectedDrugs.values());
-    invoiceTableBody.innerHTML = items.map((d, i) => {
+    const drugRows = items.map((d, i) => {
       const name = (d.fa && d.fa.name) ? `${d.fa.name} (${d.name_en})` : d.name_en;
       const strength = d.strength ? ` ${d.strength}` : "";
       return `
         <tr>
-          <td>${toPersianDigits(i + 1)}</td>
-          <td class="invoice-drug-name">${escapeHtml(name)}${escapeHtml(strength)}</td>
-          <td class="invoice-blank-cell"></td>
-          <td class="invoice-blank-cell"></td>
-          <td class="invoice-blank-cell"></td>
+          <td class="invoice-row-num">${toPersianDigits(i + 1)}</td>
+          <td class="invoice-drug-name-cell">${escapeHtml(name)}${escapeHtml(strength)}</td>
+          <td class="fill-blank" contenteditable="true">۱</td>
+          <td class="fill-blank" contenteditable="true">۰</td>
+          <td class="invoice-row-total">۰</td>
         </tr>`;
     }).join("");
-    const today = new Date();
-    invoiceDateEl.textContent = `تاریخ: ${today.toLocaleDateString("fa-IR")}`;
+    const extraRows = Array.from({ length: 5 }).map(() => `
+        <tr>
+          <td class="invoice-row-num"></td>
+          <td class="fill-blank invoice-drug-name-cell" contenteditable="true"></td>
+          <td class="fill-blank" contenteditable="true"></td>
+          <td class="fill-blank" contenteditable="true"></td>
+          <td class="invoice-row-total">۰</td>
+        </tr>`).join("");
+    invoiceTableBody.innerHTML = drugRows + extraRows;
+
+    invoiceTableBody.querySelectorAll(".invoice-drug-name-cell.fill-blank").forEach((cell) => {
+      cell.addEventListener("input", () => {
+        const row = cell.closest("tr");
+        const numCell = row.querySelector(".invoice-row-num");
+        const cells = row.querySelectorAll(".fill-blank");
+        const qtyCell = cells[0];
+        const priceCell = cells[1];
+        if (cell.textContent.trim()) {
+          if (!numCell.textContent.trim()) {
+            const rows = Array.from(invoiceTableBody.querySelectorAll("tr"));
+            let n = 0;
+            rows.forEach((r) => {
+              const nameCell = r.querySelector(".invoice-drug-name-cell");
+              if (nameCell && nameCell.textContent.trim()) {
+                n++;
+                r.querySelector(".invoice-row-num").textContent = toPersianDigits(n);
+              }
+            });
+          }
+          if (qtyCell && !qtyCell.textContent.trim()) qtyCell.textContent = "۱";
+          if (priceCell && !priceCell.textContent.trim()) priceCell.textContent = "۰";
+          recalcInvoiceRow(row);
+        } else {
+          numCell.textContent = "";
+        }
+      });
+    });
+
+    invoiceTableBody.querySelectorAll("tr").forEach((row) => {
+      const cells = row.querySelectorAll(".fill-blank");
+      const qtyCell = cells[0];
+      const priceCell = cells[1];
+      [qtyCell, priceCell].forEach((cell) => {
+        if (!cell) return;
+        cell.addEventListener("input", () => recalcInvoiceRow(row));
+      });
+    });
+
+    recalcInvoiceGrandTotal();
   }
 
   selectionInvoiceBtn.addEventListener("click", () => {
@@ -152,7 +232,6 @@
 
   function matchesAccessFilter(d) {
     if (state.accessFilter === "all") return true;
-    if (state.accessFilter === "annotated") return !!(d.fa || d.intl || d.pharm_class || d.intl_combo);
     return d.access === state.accessFilter;
   }
 
@@ -204,19 +283,12 @@
     return { total, items };
   }
 
-  function getFiltered() {
-    return DB
-      .filter((d) => matchesAccessFilter(d) && matchesQuery(d, state.query))
-      .sort((a, b) => a.name_en.localeCompare(b.name_en, "en"));
-  }
-
   function renderFilterChips() {
     const chips = [
       { key: "all", label: "همه" },
       { key: "otc", label: "بدون نسخه" },
       { key: "rx", label: "نسخه‌دار" },
       { key: "hospital", label: "بیمارستانی" },
-      { key: "annotated", label: "دارای توضیح تکمیلی" },
     ];
     el.filterRow.innerHTML = "";
     chips.forEach((c) => {
@@ -233,7 +305,7 @@
     });
   }
 
-  function renderAlphaRail(availableLetters) {
+  function renderAlphaRail(availableLetters, activeLetter) {
     el.alphaRail.innerHTML = "";
     const allLetters = ENGLISH_ALPHABET.concat(["#"]);
     allLetters.forEach((letter) => {
@@ -245,22 +317,16 @@
       if (!has) {
         btn.classList.add("disabled");
       } else {
-        btn.addEventListener("click", () => jumpToLetter(letter));
+        if (letter === activeLetter) btn.classList.add("active");
+        btn.addEventListener("click", () => {
+          state.activeLetter = letter;
+          renderList();
+          const zone = document.querySelector(".results-zone");
+          if (zone) zone.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
       }
       el.alphaRail.appendChild(btn);
     });
-  }
-
-  function jumpToLetter(letter) {
-    let guard = 0;
-    while (!document.getElementById("letter-" + letter) && renderCursor < renderPlan.length && guard < 100) {
-      renderNextBatch();
-      guard++;
-    }
-    const target = document.getElementById("letter-" + letter);
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
   }
 
   const BATCH_SIZE = 150;
@@ -279,54 +345,12 @@
     return io;
   }
 
-  function buildPlan(filtered, isSearching) {
-    const plan = [];
-    if (isSearching) {
-      filtered.forEach((d) => plan.push({ type: "card", d }));
-    } else {
-      let currentLetter = null;
-      filtered.forEach((d) => {
-        const groupLetter = firstLetter(d.name_en);
-        if (groupLetter !== currentLetter) {
-          currentLetter = groupLetter;
-          plan.push({ type: "heading", letter: groupLetter });
-        }
-        plan.push({ type: "card", d });
-      });
-    }
-    return plan;
-  }
-
   function renderNextBatch() {
     if (sentinelEl) { io.unobserve(sentinelEl); sentinelEl.remove(); sentinelEl = null; }
     const end = Math.min(renderCursor + BATCH_SIZE, renderPlan.length);
-    let currentHost = null;
-    const lastGroup = el.drugList.lastElementChild;
-    if (lastGroup && lastGroup.classList && lastGroup.classList.contains("letter-group")) {
-      currentHost = lastGroup.querySelector('[data-host="true"]');
-    }
     const frag = document.createDocumentFragment();
     for (let i = renderCursor; i < end; i++) {
-      const item = renderPlan[i];
-      if (item.type === "heading") {
-        const heading = document.createElement("div");
-        heading.className = "letter-heading";
-        heading.id = "letter-" + item.letter;
-        heading.textContent = item.letter;
-        const groupWrap = document.createElement("div");
-        groupWrap.className = "letter-group";
-        groupWrap.appendChild(heading);
-        const cardsHost = document.createElement("div");
-        cardsHost.className = "drug-list";
-        cardsHost.dataset.host = "true";
-        groupWrap.appendChild(cardsHost);
-        frag.appendChild(groupWrap);
-        currentHost = cardsHost;
-      } else {
-        const card = renderCard(item.d);
-        if (currentHost) currentHost.appendChild(card);
-        else frag.appendChild(card);
-      }
+      frag.appendChild(renderCard(renderPlan[i]));
     }
     el.drugList.appendChild(frag);
     renderCursor = end;
@@ -340,32 +364,57 @@
   }
 
   function renderList() {
-    const filtered = getFiltered();
-    el.drugList.innerHTML = "";
     if (sentinelEl) { sentinelEl = null; }
     if (io) io.disconnect();
-    el.resultsMeta.textContent = filtered.length
-      ? `${toPersianDigits(filtered.length)} دارو یافت شد`
-      : "";
+    el.drugList.innerHTML = "";
 
-    if (!filtered.length) {
+    const isSearching = !!state.query.trim();
+    el.drugList.classList.toggle("flat-list", isSearching);
+
+    const accessFiltered = DB.filter(matchesAccessFilter);
+
+    let listToRender;
+    let heading;
+
+    if (isSearching) {
+      renderAlphaRail(new Set(), null);
+      listToRender = accessFiltered
+        .filter((d) => matchesQuery(d, state.query))
+        .sort((a, b) => a.name_en.localeCompare(b.name_en, "en"));
+      heading = listToRender.length ? `\u0646\u062a\u0627\u06cc\u062c \u062c\u0633\u062a\u062c\u0648 \u2014 ${toPersianDigits(listToRender.length)} \u062f\u0627\u0631\u0648` : "";
+    } else {
+      const availableLetters = new Set(accessFiltered.map((d) => firstLetter(d.name_en)));
+      const order = ENGLISH_ALPHABET.concat(["#"]);
+      if (!state.activeLetter || !availableLetters.has(state.activeLetter)) {
+        state.activeLetter = order.find((l) => availableLetters.has(l)) || null;
+      }
+      renderAlphaRail(availableLetters, state.activeLetter);
+      listToRender = accessFiltered
+        .filter((d) => firstLetter(d.name_en) === state.activeLetter)
+        .sort((a, b) => a.name_en.localeCompare(b.name_en, "en"));
+      heading = state.activeLetter ? `${state.activeLetter} \u2014 ${toPersianDigits(listToRender.length)} \u062f\u0627\u0631\u0648` : "";
+    }
+
+    if (!listToRender.length) {
       el.emptyState.hidden = false;
-      renderAlphaRail(new Set());
       renderPlan = [];
       renderCursor = 0;
       return;
     }
     el.emptyState.hidden = true;
 
-    const isSearching = !!state.query.trim();
-    el.drugList.classList.toggle("flat-list", isSearching);
-    const availableLetters = isSearching ? new Set() : new Set(filtered.map((d) => firstLetter(d.name_en)));
-    renderAlphaRail(availableLetters);
+    if (heading) {
+      const headingEl = document.createElement("div");
+      headingEl.className = "letter-heading";
+      headingEl.textContent = heading;
+      el.drugList.appendChild(headingEl);
+    }
 
-    renderPlan = buildPlan(filtered, isSearching);
+    renderPlan = listToRender;
     renderCursor = 0;
     renderNextBatch();
   }
+
 
   function renderCard(d) {
     const wrap = document.createElement("div");
@@ -579,7 +628,7 @@
 
   function init() {
     initTheme();
-    el.drugCount.textContent = `${toPersianDigits(DB.length)} دارو در دیتابیس رسمی`;
+    el.drugCount.textContent = `${toPersianDigits(DB.length)} دارو`;
     renderFilterChips();
     renderList();
   }
