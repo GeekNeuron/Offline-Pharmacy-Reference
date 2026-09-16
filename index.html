@@ -122,65 +122,6 @@
   </div>
 </div>
 
-<dialog id="invoice-dialog">
-  <div class="about-dialog-header no-print">
-    <h2>فاکتور داروخانه</h2>
-    <div style="display:flex;gap:.5rem;align-items:center">
-      <button id="invoice-print-btn" type="button" class="selection-btn selection-btn-primary">چاپ / PDF</button>
-      <button id="invoice-close-btn" class="icon-btn" type="button" aria-label="بستن">✕</button>
-    </div>
-  </div>
-  <div class="about-dialog-body">
-    <div id="invoice-print-area" class="invoice-container">
-      <div class="invoice-header">
-        <div class="invoice-header-title">
-          <h1>داروخانه <span class="fill-line" contenteditable="true" data-placeholder="نام داروخانه"></span></h1>
-          <div class="invoice-banner">فاکتــــــور داروهــــــا</div>
-        </div>
-      </div>
-
-      <div class="invoice-info-boxes">
-        <div class="invoice-box">
-          <div class="invoice-box-title">مشخصات بیمار</div>
-          <div class="invoice-box-item"><span>نام بیمار :</span> <strong class="fill-blank" contenteditable="true" data-placeholder="............."></strong></div>
-          <div class="invoice-box-item"><span>سن بیمار :</span> <strong class="fill-blank" contenteditable="true" data-placeholder="....."></strong></div>
-          <div class="invoice-box-item"><span>کد ملی :</span> <strong class="fill-blank" contenteditable="true" data-placeholder="............."></strong></div>
-          <div class="invoice-box-item"><span>شماره تماس :</span> <strong class="fill-blank" contenteditable="true" data-placeholder="............."></strong></div>
-        </div>
-        <div class="invoice-box">
-          <div class="invoice-box-title">اطلاعات نسخه</div>
-          <div class="invoice-box-item"><span>نام دکتر :</span> <strong class="fill-blank" contenteditable="true" data-placeholder="............."></strong></div>
-          <div class="invoice-box-item"><span>بیماری/تشخیص :</span> <strong class="fill-blank" contenteditable="true" data-placeholder="............."></strong></div>
-          <div class="invoice-box-item"><span>تاریخ :</span> <strong class="fill-blank" contenteditable="true" id="invoice-date" data-placeholder="....../....../....."></strong></div>
-          <div class="invoice-box-item"><span>ساعت :</span> <strong class="fill-blank" contenteditable="true" data-placeholder="....:....."></strong></div>
-        </div>
-      </div>
-
-      <table class="invoice-items-table">
-        <thead>
-          <tr>
-            <th style="width:8%">ردیف</th>
-            <th style="width:42%">شرح دارو</th>
-            <th style="width:12%">تعداد</th>
-            <th style="width:18%">قیمت واحد (ریال)</th>
-            <th style="width:20%">مبلغ کل (ریال)</th>
-          </tr>
-        </thead>
-        <tbody id="invoice-table-body"></tbody>
-      </table>
-
-      <div class="invoice-bottom-section">
-        <div class="invoice-total-box">
-          <span>مبلغ کل قابل پرداخت :</span>
-          <strong id="invoice-grand-total">۰ ریال</strong>
-        </div>
-      </div>
-
-      <div class="invoice-footer-text">با تشکر از مراجعه شما. بهبودی شما آرزوی ماست.</div>
-    </div>
-  </div>
-</dialog>
-
 
 <footer class="app-footer">
   <p>منبع دیتابیس: <strong>فهرست رسمی دارویی ایران</strong> (سامانه IRC، سازمان غذا و دارو). این فهرست شامل

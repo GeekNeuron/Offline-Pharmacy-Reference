@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فاکتور داروها</title>
+    <style>
+        @font-face {
+            font-family: 'Vazirmatn';
+            src: url('assets/fonts/Vazirmatn-Variable.woff2') format('woff2-variations'),
+                 url('assets/fonts/Vazirmatn-Variable.woff2') format('woff2');
+            font-weight: 100 900;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .invoice-container {
+            width: 100%;
+            max-width: 800px;
+            min-width: 0;
+            background-color: #ffffff;
+            border: 2px solid #000;
+            padding: 15px;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .header-title {
+            text-align: center;
+            width: 100%;
+        }
+
+        .header-title h1 {
+            font-size: 28px;
+            font-weight: 900;
+            color: #000;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .fill-line {
+            display: inline-block;
+            width: 220px;
+            max-width: 60vw;
+            border-bottom: 1px solid #999;
+            margin-right: 5px;
+            vertical-align: middle;
+            min-height: 1.2em;
+            outline: none;
+            padding: 0 4px;
+        }
+
+        .banner {
+            border: 3px dotted #000;
+            background-color: #e0e0e0;
+            background-image: radial-gradient(#888 20%, transparent 20%);
+            background-size: 4px 4px;
+            padding: 8px 0;
+            font-size: 22px;
+            font-weight: 900;
+            display: block;
+            width: 100%;
+            text-align: center;
+            letter-spacing: 3px;
+        }
+
+        .info-boxes {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .box {
+            border: 2px solid #000;
+            border-radius: 10px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            flex: 1 1 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .box-title {
+            font-weight: 900;
+            text-align: center;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 3px;
+            margin-bottom: 3px;
+            font-size: 13px;
+        }
+
+        .box-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 6px;
+        }
+
+        .box-item span {
+            color: #333;
+            flex: none;
+            white-space: nowrap;
+        }
+
+        .box-item strong {
+            outline: none;
+            min-height: 1.2em;
+            flex: 1;
+            text-align: left;
+            border-bottom: 1px solid transparent;
+        }
+
+        .box-item strong[contenteditable]:focus {
+            border-bottom: 1px solid #000;
+            background: #f7f7f7;
+        }
+
+        .box-item strong[contenteditable]:empty::before {
+            content: attr(data-placeholder);
+            color: #bbb;
+            font-weight: 400;
+        }
+
+        .table-scroll {
+            width: 100%;
+            overflow-x: auto;
+            margin-bottom: 10px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .items-table {
+            width: 100%;
+            min-width: 560px;
+            border-collapse: collapse;
+            border: 2px solid #000;
+        }
+
+        .items-table th, .items-table td {
+            border: 1px solid #000;
+            padding: 8px 5px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .items-table th {
+            background-image: radial-gradient(#000 20%, transparent 20%);
+            background-size: 4px 4px;
+            background-color: #d0d0d0;
+            font-size: 14px;
+        }
+
+        .items-table td {
+            height: 40px;
+        }
+
+        .items-table td[contenteditable] {
+            outline: none;
+        }
+
+        .items-table td[contenteditable]:focus {
+            background: #f7f7f7;
+        }
+
+        .drug-name-cell {
+            text-align: right;
+            padding-right: 10px;
+        }
+
+        .row-total-cell {
+            font-weight: 900;
+        }
+
+        .bottom-section {
+            border-top: 2px solid #000;
+            padding-top: 15px;
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .total-box {
+            border: 3px double #000;
+            background-color: #d0d0d0;
+            background-image: radial-gradient(#888 20%, transparent 20%);
+            background-size: 4px 4px;
+            padding: 10px 20px;
+            font-size: 18px;
+            font-weight: 900;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin: 0;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .footer-text {
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            border-top: 1px solid #000;
+            padding-top: 10px;
+            margin-top: 15px;
+            color: #555;
+        }
+
+        .toolbar {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto 12px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .toolbar button {
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 8px 18px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .toolbar .btn-print {
+            background-color: #0f6e5c;
+            color: #fff;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 8px; align-items: flex-start; }
+            .header-title h1 { font-size: 22px; }
+            .banner { font-size: 17px; letter-spacing: 1px; }
+            .box { font-size: 11px; }
+            .total-box { font-size: 15px; padding: 8px 12px; }
+            .fill-line { width: 140px; }
+        }
+
+        @media print {
+            body { background: #fff; padding: 0; }
+            .invoice-container { box-shadow: none; border: 2px solid #000; }
+            .toolbar { display: none; }
+            .table-scroll { overflow: visible; }
+            .box-item strong[contenteditable]:empty::before { content: ""; }
+            .fill-line:empty::before { content: ""; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toolbar">
+        <button type="button" class="btn-print" id="print-btn">چاپ / PDF</button>
+    </div>
+
+    <div class="invoice-container" id="invoice-container">
+        <div class="header">
+            <div class="header-title">
+                <h1>داروخانه <span class="fill-line" contenteditable="true" data-placeholder="نام داروخانه"></span></h1>
+                <div class="banner">فاکتــــــور داروهــــــا</div>
+            </div>
+        </div>
+
+        <div class="info-boxes">
+            <div class="box">
+                <div class="box-title">مشخصات بیمار</div>
+                <div class="box-item"><span>نام بیمار :</span> <strong contenteditable="true" data-placeholder="............."></strong></div>
+                <div class="box-item"><span>سن بیمار :</span> <strong contenteditable="true" data-placeholder="....."></strong></div>
+                <div class="box-item"><span>کد ملی :</span> <strong contenteditable="true" data-placeholder="............."></strong></div>
+                <div class="box-item"><span>شماره تماس :</span> <strong contenteditable="true" data-placeholder="............."></strong></div>
+            </div>
+
+            <div class="box">
+                <div class="box-title">اطلاعات نسخه</div>
+                <div class="box-item"><span>نام دکتر :</span> <strong contenteditable="true" data-placeholder="............."></strong></div>
+                <div class="box-item"><span>بیماری/تشخیص :</span> <strong contenteditable="true" data-placeholder="............."></strong></div>
+                <div class="box-item"><span>تاریخ :</span> <strong contenteditable="true" data-placeholder="....../....../....."></strong></div>
+                <div class="box-item"><span>ساعت :</span> <strong contenteditable="true" data-placeholder="....:....."></strong></div>
+            </div>
+        </div>
+
+        <div class="table-scroll">
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th style="width: 8%;">ردیف</th>
+                        <th style="width: 45%;">شرح دارو</th>
+                        <th style="width: 10%;">تعداد</th>
+                        <th style="width: 17%;">قیمت واحد (ریال)</th>
+                        <th style="width: 20%;">مبلغ کل (ریال)</th>
+                    </tr>
+                </thead>
+                <tbody id="items-body"></tbody>
+            </table>
+        </div>
+
+        <div class="bottom-section">
+            <div class="total-box">
+                <span>مبلغ کل قابل پرداخت :</span>
+                <strong id="grand-total">۰ ریال</strong>
+            </div>
+        </div>
+
+        <div class="footer-text">
+            با تشکر از مراجعه شما. بهبودی شما آرزوی ماست.
+        </div>
+    </div>
+
+<script src="invoice.js"></script>
+</body>
+</html>

@@ -75,10 +75,6 @@
   const selectionCount = document.getElementById("selection-count");
   const selectionClearBtn = document.getElementById("selection-clear-btn");
   const selectionInvoiceBtn = document.getElementById("selection-invoice-btn");
-  const invoiceDialog = document.getElementById("invoice-dialog");
-  const invoiceCloseBtn = document.getElementById("invoice-close-btn");
-  const invoicePrintBtn = document.getElementById("invoice-print-btn");
-  const invoiceTableBody = document.getElementById("invoice-table-body");
 
   function updateSelectionBar() {
     const n = selectedDrugs.size;
@@ -87,7 +83,7 @@
       return;
     }
     selectionBar.hidden = false;
-    selectionCount.textContent = `${toPersianDigits(n)} داروی انتخاب‌شده`;
+    selectionCount.textContent = `${toPersianDigits(n)} \u062f\u0627\u0631\u0648\u06cc \u0627\u0646\u062a\u062e\u0627\u0628\u200c\u0634\u062f\u0647`;
   }
 
   selectionClearBtn.addEventListener("click", () => {
@@ -96,114 +92,15 @@
     updateSelectionBar();
   });
 
-  function parseInvoiceNumber(str) {
-    if (!str) return 0;
-    const map = { "۰": "0", "۱": "1", "۲": "2", "۳": "3", "۴": "4", "۵": "5", "۶": "6", "۷": "7", "۸": "8", "۹": "9" };
-    const ascii = str.toString().replace(/[۰-۹]/g, (d) => map[d]).replace(/[^\d.]/g, "");
-    const n = parseFloat(ascii);
-    return isNaN(n) ? 0 : n;
-  }
-
-  function formatInvoiceNumber(n) {
-    const rounded = Math.round(n);
-    return toPersianDigits(rounded.toLocaleString("en-US"));
-  }
-
-  function recalcInvoiceRow(row) {
-    const cells = row.querySelectorAll(".fill-blank");
-    const qtyCell = cells[0];
-    const priceCell = cells[1];
-    const totalCell = row.querySelector(".invoice-row-total");
-    if (!qtyCell || !priceCell || !totalCell) return;
-    const qty = parseInvoiceNumber(qtyCell.textContent);
-    const price = parseInvoiceNumber(priceCell.textContent);
-    totalCell.textContent = formatInvoiceNumber(qty * price);
-    recalcInvoiceGrandTotal();
-  }
-
-  function recalcInvoiceGrandTotal() {
-    let sum = 0;
-    invoiceTableBody.querySelectorAll(".invoice-row-total").forEach((cell) => {
-      sum += parseInvoiceNumber(cell.textContent);
-    });
-    const grandTotalEl = document.getElementById("invoice-grand-total");
-    if (grandTotalEl) grandTotalEl.textContent = `${formatInvoiceNumber(sum)} ریال`;
-  }
-
-  function buildInvoice() {
-    const items = Array.from(selectedDrugs.values());
-    const drugRows = items.map((d, i) => {
-      const name = (d.fa && d.fa.name) ? `${d.fa.name} (${d.name_en})` : d.name_en;
-      const strength = d.strength ? ` ${d.strength}` : "";
-      return `
-        <tr>
-          <td class="invoice-row-num">${toPersianDigits(i + 1)}</td>
-          <td class="invoice-drug-name-cell">${escapeHtml(name)}${escapeHtml(strength)}</td>
-          <td class="fill-blank" contenteditable="true">۱</td>
-          <td class="fill-blank" contenteditable="true">۰</td>
-          <td class="invoice-row-total">۰</td>
-        </tr>`;
-    }).join("");
-    const extraRows = Array.from({ length: 5 }).map(() => `
-        <tr>
-          <td class="invoice-row-num"></td>
-          <td class="fill-blank invoice-drug-name-cell" contenteditable="true"></td>
-          <td class="fill-blank" contenteditable="true"></td>
-          <td class="fill-blank" contenteditable="true"></td>
-          <td class="invoice-row-total">۰</td>
-        </tr>`).join("");
-    invoiceTableBody.innerHTML = drugRows + extraRows;
-
-    invoiceTableBody.querySelectorAll(".invoice-drug-name-cell.fill-blank").forEach((cell) => {
-      cell.addEventListener("input", () => {
-        const row = cell.closest("tr");
-        const numCell = row.querySelector(".invoice-row-num");
-        const cells = row.querySelectorAll(".fill-blank");
-        const qtyCell = cells[0];
-        const priceCell = cells[1];
-        if (cell.textContent.trim()) {
-          if (!numCell.textContent.trim()) {
-            const rows = Array.from(invoiceTableBody.querySelectorAll("tr"));
-            let n = 0;
-            rows.forEach((r) => {
-              const nameCell = r.querySelector(".invoice-drug-name-cell");
-              if (nameCell && nameCell.textContent.trim()) {
-                n++;
-                r.querySelector(".invoice-row-num").textContent = toPersianDigits(n);
-              }
-            });
-          }
-          if (qtyCell && !qtyCell.textContent.trim()) qtyCell.textContent = "۱";
-          if (priceCell && !priceCell.textContent.trim()) priceCell.textContent = "۰";
-          recalcInvoiceRow(row);
-        } else {
-          numCell.textContent = "";
-        }
-      });
-    });
-
-    invoiceTableBody.querySelectorAll("tr").forEach((row) => {
-      const cells = row.querySelectorAll(".fill-blank");
-      const qtyCell = cells[0];
-      const priceCell = cells[1];
-      [qtyCell, priceCell].forEach((cell) => {
-        if (!cell) return;
-        cell.addEventListener("input", () => recalcInvoiceRow(row));
-      });
-    });
-
-    recalcInvoiceGrandTotal();
-  }
-
   selectionInvoiceBtn.addEventListener("click", () => {
-    buildInvoice();
-    invoiceDialog.showModal();
+    const items = Array.from(selectedDrugs.values()).map((d) => ({
+      name: (d.fa && d.fa.name) ? `${d.fa.name} (${d.name_en})${d.strength ? " " + d.strength : ""}` : `${d.name_en}${d.strength ? " " + d.strength : ""}`,
+    }));
+    try {
+      localStorage.setItem("pharmacy_invoice_selection", JSON.stringify(items));
+    } catch (e) {}
+    window.open("invoice.html", "_blank");
   });
-  invoiceCloseBtn.addEventListener("click", () => invoiceDialog.close());
-  invoiceDialog.addEventListener("click", (e) => {
-    if (e.target === invoiceDialog) invoiceDialog.close();
-  });
-  invoicePrintBtn.addEventListener("click", () => window.print());
 
   function normalize(str) {
     return (str || "")
