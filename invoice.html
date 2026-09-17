@@ -78,6 +78,8 @@
             min-height: 1.2em;
             outline: none;
             padding: 0 4px;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
 
         .banner {
@@ -137,9 +139,12 @@
         .box-item strong {
             outline: none;
             min-height: 1.2em;
+            min-width: 0;
             flex: 1;
             text-align: left;
             border-bottom: 1px solid transparent;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
 
         .box-item strong[contenteditable]:focus {
@@ -153,6 +158,40 @@
             font-weight: 400;
         }
 
+        .mini-input, .mini-select {
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            font-weight: 700;
+            font-size: 12px;
+            border: none;
+            border-bottom: 1px solid #999;
+            background: transparent;
+            color: #000;
+            outline: none;
+            text-align: center;
+            padding: 0 2px;
+        }
+        .mini-input:focus, .mini-select:focus {
+            border-bottom: 1px solid #000;
+            background: #f7f7f7;
+        }
+        .mini-input.invalid {
+            border-bottom: 2px solid #c0392b;
+            color: #c0392b;
+            background: #fdecea;
+        }
+        .wide-input { width: 130px; }
+        .age-wrap, .date-wrap, .time-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .age-input { width: 34px; }
+        .unit-suffix { font-weight: 700; }
+        .date-y { width: 42px; }
+        .date-md { width: 26px; }
+        .time-input { width: 48px; }
+        .mini-select { width: 52px; cursor: pointer; }
+
         .table-scroll {
             width: 100%;
             overflow-x: auto;
@@ -165,6 +204,7 @@
             min-width: 560px;
             border-collapse: collapse;
             border: 2px solid #000;
+            table-layout: fixed;
         }
 
         .items-table th, .items-table td {
@@ -173,6 +213,8 @@
             text-align: center;
             font-size: 13px;
             font-weight: 700;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
 
         .items-table th {
@@ -192,6 +234,13 @@
 
         .items-table td[contenteditable]:focus {
             background: #f7f7f7;
+        }
+
+        .items-table td .mini-input {
+            width: 100%;
+            font-size: 13px;
+            text-align: center;
+            padding: 2px;
         }
 
         .drug-name-cell {
@@ -299,17 +348,31 @@
             <div class="box">
                 <div class="box-title">مشخصات بیمار</div>
                 <div class="box-item"><span>نام بیمار :</span> <strong contenteditable="true" data-placeholder="............."></strong></div>
-                <div class="box-item"><span>سن بیمار :</span> <strong contenteditable="true" data-placeholder="....."></strong></div>
-                <div class="box-item"><span>کد ملی :</span> <strong contenteditable="true" data-placeholder="............."></strong></div>
-                <div class="box-item"><span>شماره تماس :</span> <strong contenteditable="true" data-placeholder="............."></strong></div>
+                <div class="box-item age-row"><span>سن بیمار :</span> <span class="age-wrap"><input type="text" inputmode="numeric" maxlength="3" id="patient-age" class="mini-input age-input" placeholder="..."><span class="unit-suffix">سال</span></span></div>
+                <div class="box-item"><span>کد ملی :</span> <input type="text" inputmode="numeric" maxlength="10" id="national-id" class="mini-input wide-input" placeholder="کد ملی ۱۰ رقمی"></div>
+                <div class="box-item"><span>شماره تماس :</span> <input type="text" inputmode="numeric" maxlength="11" id="phone-number" class="mini-input wide-input" placeholder="شماره تماس ۱۱ رقمی"></div>
             </div>
 
             <div class="box">
                 <div class="box-title">اطلاعات نسخه</div>
                 <div class="box-item"><span>نام دکتر :</span> <strong contenteditable="true" data-placeholder="............."></strong></div>
                 <div class="box-item"><span>بیماری/تشخیص :</span> <strong contenteditable="true" data-placeholder="............."></strong></div>
-                <div class="box-item"><span>تاریخ :</span> <strong contenteditable="true" data-placeholder="....../....../....."></strong></div>
-                <div class="box-item"><span>ساعت :</span> <strong contenteditable="true" data-placeholder="....:....."></strong></div>
+                <div class="box-item date-row">
+                    <span>تاریخ :</span>
+                    <span class="date-wrap">
+                        <input type="text" inputmode="numeric" maxlength="4" id="date-year" class="mini-input date-y" placeholder="سال">/<input type="text" inputmode="numeric" maxlength="2" id="date-month" class="mini-input date-md" placeholder="ماه">/<input type="text" inputmode="numeric" maxlength="2" id="date-day" class="mini-input date-md" placeholder="روز">
+                    </span>
+                </div>
+                <div class="box-item time-row">
+                    <span>ساعت :</span>
+                    <span class="time-wrap">
+                        <input type="text" inputmode="numeric" maxlength="5" id="time-value" class="mini-input time-input" placeholder="۰۰:۰۰">
+                        <select id="time-ampm" class="mini-select">
+                            <option value="ق.ظ">ق.ظ</option>
+                            <option value="ب.ظ">ب.ظ</option>
+                        </select>
+                    </span>
+                </div>
             </div>
         </div>
 

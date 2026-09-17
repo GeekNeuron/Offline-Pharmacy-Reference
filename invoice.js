@@ -11,9 +11,16 @@
     return String(input).replace(/[0-9]/g, function (d) { return digitMap[d]; });
   }
 
+  function toAsciiDigits(str) {
+    return String(str || "").replace(/[۰-۹]/g, function (d) { return reverseDigitMap[d]; });
+  }
+
+  function digitsOnly(str) {
+    return toAsciiDigits(str).replace(/\D/g, "");
+  }
+
   function parseNumber(str) {
-    if (!str) return 0;
-    var ascii = String(str).replace(/[۰-۹]/g, function (d) { return reverseDigitMap[d]; }).replace(/[^\d.]/g, "");
+    var ascii = toAsciiDigits(str).replace(/[^\d.]/g, "");
     var n = parseFloat(ascii);
     return isNaN(n) ? 0 : n;
   }
@@ -38,29 +45,30 @@
     }
   }
 
-  function buildRow(name, qty, price, editableName) {
+  function buildRow(name, hasDrug, editableName) {
     var nameCell = editableName
-      ? '<td class="drug-name-cell" contenteditable="true" data-placeholder=""></td>'
+      ? '<td class="drug-name-cell" contenteditable="true"></td>'
       : '<td class="drug-name-cell">' + escapeHtml(name) + '</td>';
+    var qty = hasDrug ? "۱" : "";
+    var price = hasDrug ? "۰" : "";
+    var total = hasDrug ? "۰" : "";
     return (
       '<tr>' +
       '<td class="row-num"></td>' +
       nameCell +
-      '<td contenteditable="true">' + qty + '</td>' +
-      '<td contenteditable="true">' + price + '</td>' +
-      '<td class="row-total-cell">۰</td>' +
+      '<td><input type="text" inputmode="numeric" class="mini-input qty-input" value="' + qty + '"></td>' +
+      '<td><input type="text" inputmode="numeric" class="mini-input price-input" value="' + price + '"></td>' +
+      '<td class="row-total-cell">' + total + '</td>' +
       '</tr>'
     );
   }
 
   function renumberRows(tbody) {
     var n = 0;
-    var rows = tbody.querySelectorAll("tr");
-    rows.forEach(function (row) {
+    tbody.querySelectorAll("tr").forEach(function (row) {
       var nameCell = row.querySelector(".drug-name-cell");
       var numCell = row.querySelector(".row-num");
-      var hasName = nameCell && nameCell.textContent.trim();
-      if (hasName) {
+      if (nameCell && nameCell.textContent.trim()) {
         n++;
         numCell.textContent = toPersianDigits(n);
       } else {
@@ -70,18 +78,18 @@
   }
 
   function recalcRow(row) {
-    var editableCells = row.querySelectorAll("td[contenteditable]");
-    var qtyCell = null, priceCell = null;
-    editableCells.forEach(function (c) {
-      if (!c.classList.contains("drug-name-cell")) {
-        if (qtyCell === null) qtyCell = c;
-        else if (priceCell === null) priceCell = c;
-      }
-    });
+    var nameCell = row.querySelector(".drug-name-cell");
+    var qtyInput = row.querySelector(".qty-input");
+    var priceInput = row.querySelector(".price-input");
     var totalCell = row.querySelector(".row-total-cell");
-    if (!qtyCell || !priceCell || !totalCell) return;
-    var qty = parseNumber(qtyCell.textContent);
-    var price = parseNumber(priceCell.textContent);
+    if (!qtyInput || !priceInput || !totalCell) return;
+    if (!nameCell.textContent.trim() && !qtyInput.value.trim() && !priceInput.value.trim()) {
+      totalCell.textContent = "";
+      recalcGrandTotal();
+      return;
+    }
+    var qty = parseNumber(qtyInput.value);
+    var price = parseNumber(priceInput.value);
     totalCell.textContent = formatNumber(qty * price);
     recalcGrandTotal();
   }
@@ -95,51 +103,159 @@
     if (el) el.textContent = formatNumber(sum) + " ریال";
   }
 
+  function selectOnFocus(input) {
+    input.addEventListener("focus", function () {
+      requestAnimationFrame(function () { input.select(); });
+    });
+  }
+
+  function wireQtyInput(input, row) {
+    selectOnFocus(input);
+    input.addEventListener("input", function () {
+      var digits = digitsOnly(input.value).slice(0, 5);
+      input.value = digits ? toPersianDigits(digits) : "";
+      recalcRow(row);
+    });
+  }
+
+  function wirePriceInput(input, row) {
+    selectOnFocus(input);
+    input.addEventListener("input", function () {
+      var digits = digitsOnly(input.value).slice(0, 12);
+      input.value = digits ? formatNumber(parseInt(digits, 10)) : "";
+      recalcRow(row);
+    });
+  }
+
   function wireRow(row) {
     var nameCell = row.querySelector(".drug-name-cell");
-    var editableCells = row.querySelectorAll("td[contenteditable]");
-    var qtyCell = null, priceCell = null;
-    editableCells.forEach(function (c) {
-      if (!c.classList.contains("drug-name-cell")) {
-        if (qtyCell === null) qtyCell = c;
-        else if (priceCell === null) priceCell = c;
-      }
-    });
+    var qtyInput = row.querySelector(".qty-input");
+    var priceInput = row.querySelector(".price-input");
+
+    wireQtyInput(qtyInput, row);
+    wirePriceInput(priceInput, row);
 
     if (nameCell && nameCell.hasAttribute("contenteditable")) {
       nameCell.addEventListener("input", function () {
         var tbody = document.getElementById("items-body");
         if (nameCell.textContent.trim()) {
-          if (qtyCell && !qtyCell.textContent.trim()) qtyCell.textContent = "۱";
-          if (priceCell && !priceCell.textContent.trim()) priceCell.textContent = "۰";
+          if (!qtyInput.value.trim()) qtyInput.value = "۱";
+          if (!priceInput.value.trim()) priceInput.value = "۰";
         }
         renumberRows(tbody);
         recalcRow(row);
       });
     }
-
-    if (qtyCell) qtyCell.addEventListener("input", function () { recalcRow(row); });
-    if (priceCell) priceCell.addEventListener("input", function () { recalcRow(row); });
   }
 
-  function init() {
+  function buildItemsTable() {
     var tbody = document.getElementById("items-body");
     var selection = loadSelection();
     var html = "";
 
     selection.forEach(function (item) {
-      var name = item.name || "";
-      html += buildRow(name, "۱", "۰", false);
+      html += buildRow(item.name || "", true, false);
     });
 
     for (var i = 0; i < EXTRA_ROWS; i++) {
-      html += buildRow("", "", "", true);
+      html += buildRow("", false, true);
     }
 
     tbody.innerHTML = html;
     renumberRows(tbody);
     tbody.querySelectorAll("tr").forEach(wireRow);
     recalcGrandTotal();
+  }
+
+  function wireAgeInput() {
+    var input = document.getElementById("patient-age");
+    if (!input) return;
+    input.addEventListener("input", function () {
+      var digits = digitsOnly(input.value).slice(0, 3);
+      input.value = digits ? toPersianDigits(digits) : "";
+    });
+  }
+
+  function wireNationalId() {
+    var input = document.getElementById("national-id");
+    if (!input) return;
+    function validate() {
+      var digits = digitsOnly(input.value);
+      if (digits.length > 0 && digits.length < 10) {
+        input.classList.add("invalid");
+      } else {
+        input.classList.remove("invalid");
+      }
+    }
+    input.addEventListener("input", function () {
+      var digits = digitsOnly(input.value).slice(0, 10);
+      input.value = digits ? toPersianDigits(digits) : "";
+      validate();
+    });
+    input.addEventListener("blur", validate);
+  }
+
+  function wirePhoneInput() {
+    var input = document.getElementById("phone-number");
+    if (!input) return;
+    input.addEventListener("input", function () {
+      var digits = digitsOnly(input.value).slice(0, 11);
+      input.value = digits ? toPersianDigits(digits) : "";
+    });
+  }
+
+  function wireDateInputs() {
+    var year = document.getElementById("date-year");
+    var month = document.getElementById("date-month");
+    var day = document.getElementById("date-day");
+    [[year, 4], [month, 2], [day, 2]].forEach(function (pair) {
+      var input = pair[0], max = pair[1];
+      if (!input) return;
+      input.addEventListener("input", function () {
+        var digits = digitsOnly(input.value).slice(0, max);
+        input.value = digits ? toPersianDigits(digits) : "";
+        if (digits.length === max && input.nextEditable) {
+          input.nextEditable.focus();
+        }
+      });
+    });
+    if (year) year.nextEditable = month;
+    if (month) month.nextEditable = day;
+  }
+
+  function wireTimeInputs() {
+    var timeInput = document.getElementById("time-value");
+    var ampmSelect = document.getElementById("time-ampm");
+    if (!timeInput || !ampmSelect) return;
+
+    var now = new Date();
+    var hours24 = now.getHours();
+    var minutes = now.getMinutes();
+    var isPM = hours24 >= 12;
+    var hours12 = hours24 % 12;
+    if (hours12 === 0) hours12 = 12;
+    var hh = (hours12 < 10 ? "0" : "") + hours12;
+    var mm = (minutes < 10 ? "0" : "") + minutes;
+    timeInput.value = toPersianDigits(hh + ":" + mm);
+    ampmSelect.value = isPM ? "ب.ظ" : "ق.ظ";
+
+    timeInput.addEventListener("input", function () {
+      var digits = digitsOnly(timeInput.value).slice(0, 4);
+      var formatted = digits;
+      if (digits.length > 2) {
+        formatted = digits.slice(0, 2) + ":" + digits.slice(2);
+      }
+      timeInput.value = toPersianDigits(formatted);
+    });
+  }
+
+  function init() {
+    buildItemsTable();
+    wireAgeInput();
+    wireNationalId();
+    wirePhoneInput();
+    wireDateInputs();
+    wireTimeInputs();
 
     var printBtn = document.getElementById("print-btn");
     if (printBtn) printBtn.addEventListener("click", function () { window.print(); });
